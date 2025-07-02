@@ -27,28 +27,6 @@ export function ApplicationsTable(params?: {
 
   return (
     <>
-      <div className="w-full flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold mb-2">Applications</h2>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious href="#" />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">{applications?.pagination?.total}</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">{applications?.pagination?.next_key}</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
       {applicationsLoading ? (
         <div>Loading...</div>
       ) : applicationsError ? (
