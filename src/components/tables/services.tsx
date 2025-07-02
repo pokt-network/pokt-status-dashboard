@@ -44,7 +44,7 @@ export function ServicesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.service?.map((svc: any) => (
+            {data?.service?.map((svc) => (
               <TableRow key={svc.id}>
                 <TableCell>{svc.id}</TableCell>
                 <TableCell>{svc.name}</TableCell>

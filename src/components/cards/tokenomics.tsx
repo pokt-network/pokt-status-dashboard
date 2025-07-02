@@ -1,5 +1,4 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useTokenomics } from "@/hooks/useTokenomics";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 

@@ -41,7 +41,7 @@ export function ApplicationsTable({params, setNextPageKey}: {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.applications.map((app: any) => (
+            {data?.applications.map((app) => (
               <TableRow key={app.address}>
                 <TableCell>{toTruncatedPoktAddress(app.address)}</TableCell>
                 <TableCell>{app.stake.amount} {app.stake.denom}</TableCell>

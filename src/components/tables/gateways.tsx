@@ -44,7 +44,7 @@ export function GatewaysTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.gateways?.map((gw: any) => (
+            {data?.gateways?.map((gw) => (
               <TableRow key={gw.address}>
                 <TableCell>{toTruncatedPoktAddress(gw.address)}</TableCell>
                 <TableCell>{gw.stake.amount} {gw.stake.denom}</TableCell>

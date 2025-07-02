@@ -44,7 +44,7 @@ export function SuppliersTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.supplier?.map((sup: any) => (
+            {data?.supplier?.map((sup) => (
               <TableRow key={sup.operator_address}>
                 <TableCell>{toTruncatedPoktAddress(sup.operator_address)}</TableCell>
                 <TableCell>{toTruncatedPoktAddress(sup.owner_address)}</TableCell>
