@@ -1,14 +1,5 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { useTokenomics } from "@/hooks/useTokenomics";
 
 export function TokenomicsTable() {
