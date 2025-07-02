@@ -1,28 +1,36 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useGateways } from "@/hooks/useGateways"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { PaginationControls } from "../pagination/pagination-controls";
+import { useState } from "react";
 
-export function GatewaysTable(params?: {
-  paginationKey?: string;
-  paginationOffset?: number;
-  paginationLimit?: number;
-  paginationCountTotal?: boolean;
-  paginationReverse?: boolean;
-  delegateeGatewayAddress?: string;
+export function GatewaysTable({
+  params,
+  setNextPageKey,
+}: {
+  params?: {
+    paginationKey?: string;
+    paginationOffset?: number;
+    paginationLimit?: number;
+    paginationCountTotal?: boolean;
+    paginationReverse?: boolean;
+    delegateeGatewayAddress?: string;
+  },
+  setNextPageKey?: (nextPageKey: string) => void
 }) {
   const { data, isLoading, error } = useGateways(params);
 
+  const [pageKeys, setPageKeys] = useState<string[]>([]);
+
   return (
-    <>
+    <div className="flex flex-col gap-2">
+      <PaginationControls
+        pageKeys={pageKeys}
+        setPageKeys={setPageKeys}
+        setNextPageKey={setNextPageKey}
+        nextPageKey={data?.pagination?.next_key}
+      />
+
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
@@ -45,6 +53,6 @@ export function GatewaysTable(params?: {
           </TableBody>
         </Table>
       )}
-    </>
+    </div>
   );
 }

@@ -71,6 +71,7 @@ export class PocketApi {
           }
           const response = await fetch(`${this.apiUrl}/pokt-network/poktroll/application/application${query}`);
           const data = await response.json();
+          console.log(data);
           return data;
         },
         application_by_address: async (address: string): Promise<{

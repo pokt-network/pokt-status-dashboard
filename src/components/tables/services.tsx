@@ -1,27 +1,34 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { useServices } from "@/hooks/useServices";
+import { useState } from "react";
+import { PaginationControls } from "../pagination/pagination-controls";
 
-export function ServicesTable(params?: {
-  paginationKey?: string,
-  paginationOffset?: number,
-  paginationLimit?: number,
-  paginationCountTotal?: boolean,
-  paginationReverse?: boolean,
+export function ServicesTable({
+  params,
+  setNextPageKey,
+}: {
+  params?: {
+    paginationKey?: string;
+    paginationOffset?: number;
+    paginationLimit?: number;
+    paginationCountTotal?: boolean;
+    paginationReverse?: boolean;
+  },
+  setNextPageKey?: (nextPageKey: string) => void
 }) {
   const { data, isLoading, error } = useServices(params);
 
+  const [pageKeys, setPageKeys] = useState<string[]>([]);
+
   return (
-    <>
+    <div className="flex flex-col gap-2">
+      <PaginationControls
+        pageKeys={pageKeys}
+        setPageKeys={setPageKeys}
+        setNextPageKey={setNextPageKey}
+        nextPageKey={data?.pagination?.next_key}
+      />
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
@@ -48,6 +55,6 @@ export function ServicesTable(params?: {
           </TableBody>
         </Table>
       )}
-    </>
+    </div>
   );
 }

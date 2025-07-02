@@ -1,35 +1,35 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useApplications } from "@/hooks/useApplications"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { PaginationControls } from "../pagination/pagination-controls";
 
-export function ApplicationsTable(params?: {
-  paginationKey?: string;
-  paginationOffset?: number;
-  paginationLimit?: number;
-  paginationCountTotal?: boolean;
-  paginationReverse?: boolean;
-  delegateeGatewayAddress?: string;
+export function ApplicationsTable({params, setNextPageKey}: {
+  params?: {
+    paginationKey?: string;
+    paginationOffset?: number;
+    paginationLimit?: number;
+    paginationCountTotal?: boolean;
+    paginationReverse?: boolean;
+    delegateeGatewayAddress?: string;
+  },
+  setNextPageKey?: (nextPageKey: string) => void
 }) {
-  const [prevPageKey, setPrevPageKey] = useState<string | undefined>(undefined);
-  const [currentPageKey, setCurrentPageKey] = useState<string | undefined>(params?.paginationKey);
-  const [nextPageKey, setNextPageKey] = useState<string | undefined>(undefined);
-  const { data: applications, isLoading: applicationsLoading, error: applicationsError } = useApplications(params);
+  const { data, isLoading, error } = useApplications(params);
+  
+  const [pageKeys, setPageKeys] = useState<string[]>([]);
 
   return (
-    <>
-      {applicationsLoading ? (
+    <div className="flex flex-col gap-2">
+      <PaginationControls
+        pageKeys={pageKeys}
+        setPageKeys={setPageKeys}
+        setNextPageKey={setNextPageKey}
+        nextPageKey={data?.pagination?.next_key}
+      />
+      {isLoading ? (
         <div>Loading...</div>
-      ) : applicationsError ? (
+      ) : error ? (
         <div>Error loading applications.</div>
       ) : (
         <Table>
@@ -41,7 +41,7 @@ export function ApplicationsTable(params?: {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {applications?.applications.map((app: any) => (
+            {data?.applications.map((app: any) => (
               <TableRow key={app.address}>
                 <TableCell>{toTruncatedPoktAddress(app.address)}</TableCell>
                 <TableCell>{app.stake.amount} {app.stake.denom}</TableCell>
@@ -51,6 +51,6 @@ export function ApplicationsTable(params?: {
           </TableBody>
         </Table>
       )}
-    </>
+    </div>
   );
 }
