@@ -5,6 +5,7 @@ import { GatewaysCard } from "@/components/cards/gateways";
 import { ApplicationsCard } from "@/components/cards/applications";
 import { ServicesCard } from "@/components/cards/services";
 import { SuppliersCard } from "@/components/cards/suppliers";
+import { RelayMiningDifficultiesCard } from "@/components/cards/relay-mining-difficulties";
 
 export default function Home() {
   return (
@@ -23,6 +24,10 @@ export default function Home() {
       {/* Services Table */}
       <section>
         <ServicesCard />
+      </section>
+      {/* Relay Mining Difficulties Table */}
+      <section>
+        <RelayMiningDifficultiesCard />
       </section>
       {/* Suppliers Table */}
       <section>

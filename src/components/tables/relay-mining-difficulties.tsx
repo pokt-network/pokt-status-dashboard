@@ -1,25 +1,23 @@
 import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-
-import { useSuppliers } from "@/hooks/useSuppliers";
+import { useRelayMiningDifficulties } from "@/hooks/useRelayMiningDifficulties"
 import { useState } from "react";
 import { PaginationControls } from "../pagination/pagination-controls";
 
-export function SuppliersTable({
-  params,
-  setNextPageKey,
-}: {
+export function RelayMiningDifficultiesTable({params, setNextPageKey}: {
   params?: {
     paginationKey?: string;
     paginationOffset?: number;
     paginationLimit?: number;
     paginationCountTotal?: boolean;
     paginationReverse?: boolean;
+    delegateeGatewayAddress?: string;
   },
   setNextPageKey?: (nextPageKey: string) => void
 }) {
+  const { data, isLoading, error } = useRelayMiningDifficulties(params);
+  
   const [pageKeys, setPageKeys] = useState<string[]>([]);
-  const { data, isLoading, error } = useSuppliers(params);
 
   return (
     <div className="flex flex-col gap-2">
@@ -32,26 +30,24 @@ export function SuppliersTable({
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
-        <div>Error loading suppliers.</div>
+        <div>Error loading applications.</div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Operator Address</TableHead>
-              <TableHead>Owner Address</TableHead>
-              <TableHead>Stake</TableHead>
-              <TableHead>Number of Services</TableHead>
-              <TableHead>Unstake Session End Height</TableHead>
+              <TableHead>Block Height</TableHead>
+              <TableHead>Service ID</TableHead>
+              <TableHead>Number of Relays</TableHead>
+              <TableHead>Target Hash</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.supplier?.map((sup) => (
-              <TableRow key={sup.operator_address}>
-                <TableCell>{toTruncatedPoktAddress(sup.operator_address)}</TableCell>
-                <TableCell>{toTruncatedPoktAddress(sup.owner_address)}</TableCell>
-                <TableCell>{sup.stake?.amount} {sup.stake?.denom}</TableCell>
-                <TableCell>{sup.services.length}</TableCell>
-                <TableCell>{sup.unstake_session_end_height}</TableCell>
+            {data?.relayMiningDifficulty.map((relay) => (
+              <TableRow key={relay.service_id}>
+                <TableCell>{relay.block_height}</TableCell>
+                <TableCell>{toTruncatedPoktAddress(relay.service_id)}</TableCell>
+                <TableCell>{relay.num_relays_ema}</TableCell>
+                <TableCell>{relay.target_hash}</TableCell>
               </TableRow>
             ))}
           </TableBody>
