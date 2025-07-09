@@ -1,4 +1,3 @@
-import { toTruncatedPoktAddress } from "@/utils/formatting"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useRelayMiningDifficulties } from "@/hooks/useRelayMiningDifficulties"
 import { useState } from "react";
