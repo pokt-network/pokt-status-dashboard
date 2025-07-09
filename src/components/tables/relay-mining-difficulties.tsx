@@ -45,7 +45,7 @@ export function RelayMiningDifficultiesTable({params, setNextPageKey}: {
             {data?.relayMiningDifficulty.map((relay) => (
               <TableRow key={relay.service_id}>
                 <TableCell>{relay.block_height}</TableCell>
-                <TableCell>{toTruncatedPoktAddress(relay.service_id)}</TableCell>
+                <TableCell>{relay.service_id}</TableCell>
                 <TableCell>{relay.num_relays_ema}</TableCell>
                 <TableCell>{relay.target_hash}</TableCell>
               </TableRow>

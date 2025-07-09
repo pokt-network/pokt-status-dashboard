@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { useServices } from "@/hooks/useServices";
 import { useState } from "react";
 import { PaginationControls } from "../pagination/pagination-controls";
+import { useServiceParams } from "@/hooks/useServiceParams";
 
 export function ServicesTable({
   params,
@@ -18,17 +19,30 @@ export function ServicesTable({
   setNextPageKey?: (nextPageKey: string) => void
 }) {
   const { data, isLoading, error } = useServices(params);
+  const { data: paramsData } = useServiceParams();
 
   const [pageKeys, setPageKeys] = useState<string[]>([]);
 
   return (
     <div className="flex flex-col gap-2">
-      <PaginationControls
-        pageKeys={pageKeys}
-        setPageKeys={setPageKeys}
-        setNextPageKey={setNextPageKey}
-        nextPageKey={data?.pagination?.next_key}
-      />
+      <div className="flex justify-between items-end mb-2">
+        <div className="flex flex-col gap-2 text-sm min-w-xs">
+          <div className="flex justify-between gap-4">
+            <p className="font-semibold">Target Number of Relays:</p>
+            <p>{paramsData?.params?.target_num_relays}</p>
+          </div>
+          <div className="flex justify-between gap-4">
+            <p className="font-semibold">Add Service Fee:</p>
+            <p>{paramsData?.params?.add_service_fee.amount} {paramsData?.params?.add_service_fee.denom}</p>
+          </div>
+        </div>
+        <PaginationControls
+          pageKeys={pageKeys}
+          setPageKeys={setPageKeys}
+          setNextPageKey={setNextPageKey}
+          nextPageKey={data?.pagination?.next_key}
+        />
+      </div>
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
@@ -48,7 +62,7 @@ export function ServicesTable({
               <TableRow key={svc.id}>
                 <TableCell>{svc.id}</TableCell>
                 <TableCell>{svc.name}</TableCell>
-                <TableCell>{toTruncatedPoktAddress(svc.owner_address)}</TableCell>
+                <TableCell className="text-blue-600 font-medium">{toTruncatedPoktAddress(svc.owner_address)}</TableCell>
                 <TableCell>{svc.compute_units_per_relay}</TableCell>
               </TableRow>
             ))}
