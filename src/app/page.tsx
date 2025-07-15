@@ -6,10 +6,20 @@ import { ApplicationsCard } from "@/components/cards/applications";
 import { ServicesCard } from "@/components/cards/services";
 import { SuppliersCard } from "@/components/cards/suppliers";
 import { RelayMiningDifficultiesCard } from "@/components/cards/relay-mining-difficulties";
+import { NodeStatusCard } from "@/components/cards/node-status";
+import { ConnectionsCard } from "@/components/cards/connections";
+
+// Node count | Status | Latency | Block
 
 export default function Home() {
   return (
     <div className="flex flex-col gap-8 p-8 w-full">
+      {/* <section>
+        <NodeStatusCard />
+      </section>
+      <section>
+        <ConnectionsCard />
+      </section> */}
       <section className="flex justify-between gap-8">
         {/* Gateways Card */}
         <GatewaysCard />

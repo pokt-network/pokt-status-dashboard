@@ -13,6 +13,136 @@ export class PocketApi {
     this.apiUrl = apiUrl;
   }
 
+  public node = {
+    config: async (): Promise<{
+      halt_height: string,
+      minimum_gas_price: string,
+      pruning_interval: string,
+      pruning_keep_recent: string
+    } | ErrorResponse> => {
+      const response = await fetch(`${this.apiUrl}/cosmos/base/node/v1beta1/config`);
+      return await response.json();
+    },
+    status: async (): Promise<{
+      app_hash: string,
+      earliest_store_height: string,
+      height: string,
+      timestamp: string,
+      validator_hash: string
+    } | ErrorResponse> => {
+      const response = await fetch(`${this.apiUrl}/cosmos/base/node/v1beta1/status`);
+      return await response.json();
+    }
+  }
+
+  public tendermint = {
+    nodeInfo: async (): Promise<{
+      application_version: {
+        app_name: string,
+        build_deps: [
+          {
+            path: string,
+            sum: string,
+            version: string
+          }
+        ],
+        build_tags: string,
+        cosmos_sdk_version: string,
+        git_commit: string,
+        go_version: string,
+        name: string,
+        version: string
+      },
+      default_node_info: {
+        channels: string,
+        default_node_id: string,
+        listen_addr: string,
+        moniker: string,
+        network: string,
+        other: {
+          rpc_address: string,
+          tx_index: string
+        },
+        protocol_version: {
+          app: string,
+          block: string,
+          p2p: string
+        },
+        version: string
+      }
+    } | ErrorResponse> => {
+      const response = await fetch(`${this.apiUrl}/cosmos/base/tendermint/v1beta1/node_info`);
+      return await response.json();
+    },
+    syncing: async (): Promise<{
+      syncing: boolean
+    } | ErrorResponse> => {
+      const response = await fetch(`${this.apiUrl}/cosmos/base/tendermint/v1beta1/syncing`);
+      return await response.json();
+    }
+  }
+
+  public ibc_core = {
+    connection: {
+      params: async (): Promise<{
+        params: {
+          max_expected_time_per_block: string
+        }
+      } | ErrorResponse> => {
+        const response = await fetch(`${this.apiUrl}/ibc/core/connection/v1/params`);
+        return await response.json();
+      },
+      connections: async (params?: {
+        paginationKey?: string,
+        paginationOffset?: number,
+        paginationLimit?: number,
+        paginationCountTotal?: boolean,
+        paginationReverse?: boolean,
+      }): Promise<{
+        connections: {
+          client_id: string,
+          counterparty: {
+            client_id: string,
+            connection_id: string,
+            prefix: {
+              key_prefix: string
+            }
+          },
+          delay_period: string,
+          id: string,
+          state: string,
+          versions: {
+            features: string[],
+            identifier: string
+          }[],
+        }[],
+        height: {
+          revision_height: string,
+          revision_number: string
+        },
+        pagination: {
+          next_key: string,
+          total: string
+        }
+      } | ErrorResponse> => {
+        // Build query string from params
+        let query = '';
+        if (params) {
+          const searchParams = new URLSearchParams();
+          if (params.paginationKey) searchParams.append("pagination.key", params.paginationKey);
+          if (params.paginationOffset) searchParams.append("pagination.offset", params.paginationOffset.toString());
+          if (params.paginationLimit) searchParams.append("pagination.limit", params.paginationLimit.toString());
+          if (params.paginationCountTotal) searchParams.append("pagination.count_total", String(params.paginationCountTotal));
+          if (params.paginationReverse) searchParams.append("pagination.reverse", String(params.paginationReverse));
+          const qs = searchParams.toString();
+          if (qs) query = `?${qs}`;
+        }
+        const response = await fetch(`${this.apiUrl}/ibc/core/connection/v1/connections${query}`);
+        return await response.json();
+      }
+    }
+  }
+
   public poktNetwork = {
     poktroll: {
       application: {
