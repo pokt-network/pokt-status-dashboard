@@ -1,17 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useNodeStatus } from "@/hooks/useNodeStatus";
 
-export function NodeStatusTable({params, setNextPageKey}: {
-  params?: {
-    paginationKey?: string;
-    paginationOffset?: number;
-    paginationLimit?: number;
-    paginationCountTotal?: boolean;
-    paginationReverse?: boolean;
-    delegateeGatewayAddress?: string;
-  },
-  setNextPageKey?: (nextPageKey: string) => void
-}) {
+export function NodeStatusTable() {
   const { data, isLoading, error } = useNodeStatus();
 
   return (

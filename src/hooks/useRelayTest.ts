@@ -1,20 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/utils/env";
-import { useServices } from "./useServices";
-import { ethers } from "ethers"
+import { createPublicClient, http } from "viem";
+import { RPC_URLS } from "@/utils/rpc";
 
 
 export async function performRelayTest({serviceId}: {serviceId: string}) {
   const POCKET_URL = `https://${serviceId}.${env.rpcUrlDomain}/${env.rpcKey}`
-  const provider = new ethers.JsonRpcProvider(POCKET_URL)
+  const client = createPublicClient({
+    transport: http(POCKET_URL),
+  })
 
+  let blockNumber: bigint | null = null;
+  let status: "success" | "error" = "success";
   const startTime = performance.now();
-  const blockNumber = await provider.getBlockNumber()
+  try {
+    blockNumber = await client.getBlockNumber()
+  } catch (error) {
+    console.error(error);
+    blockNumber = null;
+    status = "error";
+  }
   const endTime = performance.now();
   const latency = endTime - startTime;
 
   return {
     blockNumber,
+    status,
     latency: Math.round(latency), // latency in milliseconds
   };
 }
@@ -24,15 +35,26 @@ export function useBlockNumber({serviceId}: {serviceId: string}) {
     queryKey: ["block-number", serviceId],
     queryFn: async () => {
       const POCKET_URL = `https://${serviceId}.${env.rpcUrlDomain}/${env.rpcKey}`
-      const provider = new ethers.JsonRpcProvider(POCKET_URL)
+      const client = createPublicClient({
+        transport: http(POCKET_URL),
+      })
 
+      let blockNumber: bigint | null = null;
+      let status: "success" | "error" = "success";
       const startTime = performance.now();
-      const blockNumber = await provider.getBlockNumber()
+      try {
+        blockNumber = await client.getBlockNumber()
+      } catch (error) {
+        console.error(error);
+        blockNumber = null;
+        status = "error";
+      }
       const endTime = performance.now();
       const latency = endTime - startTime;
 
       return {
         blockNumber,
+        status,
         latency: Math.round(latency), // latency in milliseconds
       };
     },
@@ -41,25 +63,14 @@ export function useBlockNumber({serviceId}: {serviceId: string}) {
 
 
 export function useRelayTest() {
-  const { data } = useServices()
-
   return useQuery({
     queryKey: ["relay-test"],
     queryFn: async () => {
-      if (!data) return;
-      const responses = await Promise.all(data?.service.map(async (service) => {
-        const POCKET_URL = `https://${service.id}.${env.rpcUrlDomain}/${env.rpcKey}`
-        const provider = new ethers.JsonRpcProvider(POCKET_URL)
-
-        const startTime = performance.now();
-        const blockNumber = await provider.getBlockNumber()
-        const endTime = performance.now();
-        const latency = endTime - startTime;
-
+      const responses = await Promise.all(RPC_URLS.map(async (chain) => {
+        const result = await performRelayTest({serviceId: chain});
         return {
-          serviceId: service.id,
-          blockNumber,
-          latency: Math.round(latency), // latency in milliseconds
+          chain,
+          ...result,
         };
       }));
       return responses;

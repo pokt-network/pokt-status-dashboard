@@ -39,13 +39,11 @@ export class PocketApi {
     nodeInfo: async (): Promise<{
       application_version: {
         app_name: string,
-        build_deps: [
-          {
-            path: string,
-            sum: string,
-            version: string
-          }
-        ],
+        build_deps: {
+          path: string,
+          sum: string,
+          version: string
+        }[],
         build_tags: string,
         cosmos_sdk_version: string,
         git_commit: string,

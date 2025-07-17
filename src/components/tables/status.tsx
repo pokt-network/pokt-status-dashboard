@@ -1,90 +1,63 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { performRelayTest, useRelayTest } from "@/hooks/useRelayTest";
-import { useServices } from "@/hooks/useServices";
-import { useEffect, useMemo, useState } from "react";
+import { useRelayTest } from "@/hooks/useRelayTest";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function StatusTable() {
-  const refreshInterval = 1 * 60;
+  const refreshInterval = 5 * 60;
   const [countdown, setCountdown] = useState(refreshInterval);
-  const { data: serviceData } = useServices();
-  const [error, setError] = useState<Error | null>(null);
 
-  const [results, setResults] = useState<{serviceId: string, blockNumber: number, latency: number, status: string}[]>([]);
-
-  const isLoading = useMemo(() => results.length === 0, [results]);
-
-  async function getPerformanceResults() {
-    setError(null);
-    if (!serviceData) {
-      setError(new Error("No services found"));
-      return;
-    }
-    for (const service of serviceData.service) {
-      try {
-        const { blockNumber, latency } = await performRelayTest({serviceId: service.id});
-        setResults(prevResults => prevResults.map(result => result.serviceId === service.id ? { ...result, blockNumber, latency } : result));
-      } catch (error) {
-        setError(error as Error);
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (serviceData) {
-      setResults(serviceData.service.map((service) => ({
-        serviceId: service.id,
-        blockNumber: 0,
-        latency: 0,
-        status: "Loading..."
-      })));
-    }
-  }, [serviceData]);
+  const { data: relayTestData, refetch, isLoading: isLoadingRelayTest, isFetching: isFetchingRelayTest } = useRelayTest();
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCountdown(countdown - 1);
       if (countdown === 0) {
-        getPerformanceResults();
+        refetch();
         setCountdown(refreshInterval);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [countdown, getPerformanceResults]);
+  }, [countdown, refetch]);
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-between items-end mb-2">
-        <div className="flex flex-col gap-2 text-sm min-w-xs">
-          <div className="flex justify-between gap-4">
-            <p className="font-semibold">Refresh in:</p>
-            <p>{countdown}</p>
+      <div className="flex justify-end items-end mb-2 gap-2">
+        {isLoadingRelayTest || isFetchingRelayTest ? (
+          <Loader2 className="animate-spin w-4 h-4" />
+        ) : (
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex justify-start gap-4">
+              <p className="font-semibold">Refreshed in:</p>
+              <p className="min-w-10 text-right">{countdown}s</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div>Error loading applications.</div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Service ID</TableHead>
-              <TableHead>Block Number</TableHead>
-              <TableHead>Latency</TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Chain</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Latency</TableHead>
+            <TableHead>Block</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {relayTestData && relayTestData.length > 0 ? relayTestData.map((item) => (
+            <TableRow key={item.chain}>
+              <TableCell className="text-blue-600 font-medium">{item.chain}</TableCell>
+              <TableCell className={item.status === "success" ? "text-green-500" : item.status === "error" ? "text-red-500" : "text-yellow-500"}>{item.status === "success" ? "✅ Healthy" : item.status === "error" ? "❌ Need attention" : "⏳ Loading"}</TableCell>
+              <TableCell>{item.latency ?? "--"}ms</TableCell>
+              <TableCell>{item.blockNumber ?? "--"}</TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {results.map((item) => (
-              <TableRow key={item.serviceId}>
-                <TableCell className="text-blue-600 font-medium">{item.serviceId}</TableCell>
-                <TableCell>{item.blockNumber}</TableCell>
-                <TableCell>{item.latency}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+          )) : (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">No data</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }
