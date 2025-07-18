@@ -1,5 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useRelayTest } from "@/hooks/useRelayTest";
+import { useSuppliers } from "@/hooks/useSuppliers";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -8,6 +9,9 @@ export function StatusTable() {
   const [countdown, setCountdown] = useState(refreshInterval);
 
   const { data: relayTestData, refetch, isLoading: isLoadingRelayTest, isFetching: isFetchingRelayTest } = useRelayTest();
+  const { data: supplierData } = useSuppliers();
+
+  console.log(supplierData?.supplier);
 
   useEffect(() => {
     const interval = setInterval(() => {
