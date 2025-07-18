@@ -9,9 +9,9 @@ export function StatusTable() {
   const [countdown, setCountdown] = useState(refreshInterval);
 
   const { data: relayTestData, refetch, isLoading: isLoadingRelayTest, isFetching: isFetchingRelayTest } = useRelayTest();
-  const { data: supplierData } = useSuppliers();
+  // const { data: supplierData } = useSuppliers();
 
-  console.log(supplierData?.supplier);
+  // console.log(supplierData?.supplier);
 
   useEffect(() => {
     const interval = setInterval(() => {
