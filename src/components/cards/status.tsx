@@ -1,4 +1,3 @@
-import { Card, CardContent } from "../ui/card";
 import { StatusTable } from "../tables/status";
 
 export function StatusCard() {
@@ -9,11 +8,9 @@ export function StatusCard() {
           <h1 className="text-white text-2xl font-bold">Status</h1>
         </div>
       </div>
-      <Card className="w-full min-w-md p-0 gap-1 border-none bg-none">
-        <CardContent className="border-gray-200 border-2 p-4 rounded-lg">
-          <StatusTable />
-        </CardContent>
-      </Card>
+      <div className="mt-4">
+        <StatusTable />
+      </div>
     </div>
   );
 }
