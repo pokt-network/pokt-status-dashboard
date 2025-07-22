@@ -2,7 +2,7 @@ import { Logo } from "./ui/logo";
 
 export function Header() {
   return (
-    <header className="bg-primary border-b border-gray-200 px-8 py-4">
+    <header className="bg-[#09279f] border-b border-gray-200 px-8 py-4">
       <div className="flex items-center justify-between">
         {/* Left side - Logo */}
         <div className="flex items-center">

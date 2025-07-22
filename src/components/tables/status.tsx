@@ -37,7 +37,7 @@ export function StatusTable() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-end items-end mb-2 gap-2">
+      <div className="flex justify-end items-end mb-2 gap-2 mr-2">
         {isLoadingRelayTest || isFetchingRelayTest ? (
           <Loader2 className="animate-spin w-4 h-4" />
         ) : (
