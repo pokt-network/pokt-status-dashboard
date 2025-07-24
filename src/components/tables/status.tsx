@@ -73,7 +73,7 @@ export function StatusTable() {
             </TableRow>
           )) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center">No data</TableCell>
+              <TableCell colSpan={5} className="text-center">No data</TableCell>
             </TableRow>
           )}
         </TableBody>
