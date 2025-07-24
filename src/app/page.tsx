@@ -7,7 +7,7 @@ import { StatusCard } from "@/components/cards/status";
 export default function Home() {
   return (
     <div className="flex flex-col gap-8 p-8 w-full">
-      <section>
+      <section className="w-full flex justify-center">
         <StatusCard />
       </section>
     </div>
