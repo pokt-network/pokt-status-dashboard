@@ -1,7 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
-import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export function StatusTable() {
@@ -62,9 +63,11 @@ export function StatusTable() {
         <TableBody>
           {data && data.length > 0 ? data.map((item) => (
             <TableRow key={item.chain}>
-              <TableCell className="text-blue-600 font-medium">{item.chain}</TableCell>
+              <TableCell>{item.chain}</TableCell>
               <TableCell>{item.supplier ?? "--"}</TableCell>
-              <TableCell className={item.status === "success" ? "text-green-500" : item.status === "error" ? "text-red-500" : "text-yellow-500"}>{item.status === "success" ? "✅ Healthy" : item.status === "error" ? "❌ Need attention" : "⏳ Loading"}</TableCell>
+              <TableCell>
+                <HealthLabel status={item.status} />
+              </TableCell>
               <TableCell>{item.latency ?? "--"}ms</TableCell>
               <TableCell>{item.blockNumber ?? "--"}</TableCell>
             </TableRow>
@@ -75,6 +78,29 @@ export function StatusTable() {
           )}
         </TableBody>
       </Table>
+    </div>
+  );
+}
+
+export function HealthLabel({ status }: { status: string }) {
+  return (
+    <div className={cn(status === "success" ? "text-[#60BC29]" : status === "error" ? "text-[#E03834]" : "text-yellow-500")}>
+      {status === "success" ? (
+        <div className="flex items-center gap-2">
+          <CircleCheck className="w-4 h-4" />
+          <p>Healthy</p>
+        </div>
+      ) : status === "error" ? (
+        <div className="flex items-center gap-2">
+          <CircleX className="w-4 h-4" />
+          <p>Needs attention</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <p>Loading</p>
+        </div>
+      )}
     </div>
   );
 }
