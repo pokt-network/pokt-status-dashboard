@@ -3,10 +3,10 @@ import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export function StatusTable() {
-  const { data: relayTestData, refetch, isLoading: isLoadingRelayTest, isFetching: isFetchingRelayTest } = useRelayTest();
+  const { data: relayTestData } = useRelayTest();
   const { data: supplierData } = useSuppliers({
     paginationLimit: 1000,
     paginationCountTotal: true,
