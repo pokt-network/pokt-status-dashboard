@@ -18,7 +18,18 @@ export function StatusTable() {
 
   const data = useMemo(() => {
     return relayTestData?.map((item) => {
-      const supplier = supplierData?.supplier.reduce((acc, supplier) => acc + supplier.services.reduce((count, service) => count + (service.service_id === item.chain ? 1 : 0), 0), 0);
+      const supplier = supplierData?.supplier.reduce(
+        (acc, supplier) => {
+          return acc + supplier.services.reduce(
+            (count, service) => {
+              if (item.chain.includes("op") && service.service_id.includes("op")) {
+                console.log({ service_id: service.service_id, chain: item.chain });
+              }
+              return count + (service.service_id === item.chain ? 1 : 0)
+            },
+            0
+          )
+        }, 0);
       return {
         ...item,
         supplier,

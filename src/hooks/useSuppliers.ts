@@ -13,24 +13,29 @@ export function useSuppliers(params?: {
     queryKey: ['suppliers', ...Object.values(params || {})],
     queryFn: async () => {
       const suppliers = [];
-      let nextPageKey = params?.paginationKey;
-      let index = 0;
-      while (true) {
-        console.log(`Fetching suppliers ${index}`);
-        index++;
-        const res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationKey: nextPageKey });
-        if ('pagination' in res) {
-          console.log({ pagination: res.pagination });
-        }
+      let total = 0;
+      const paginationLimit = params?.paginationLimit ?? 1000;
+      console.log(`Fetching suppliers 0 to ${paginationLimit}`);
+      let res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit });
+      if ('supplier' in res) suppliers.push(...res.supplier);
+      if ('pagination' in res) {
+        total = parseInt(res.pagination.total);
+      } else {
+        throw new Error(res.message || 'Failed to fetch suppliers');
+      }
+      console.log({ total, count: suppliers.length });
+      for (let i = paginationLimit; i < total; i += paginationLimit) {
+        console.log(`Fetching suppliers ${i} to ${i + paginationLimit}`);
+        res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit, paginationOffset: i });
         if ('supplier' in res) suppliers.push(...res.supplier);
-        if (!('pagination' in res) || !res.pagination.next_key) break;
-        nextPageKey = res.pagination.next_key;
+        else throw new Error(res.message || 'Failed to fetch suppliers');
+        console.log({ total, count: suppliers.length });
       }
       if (suppliers.length === 0) throw new Error('Failed to fetch suppliers');
       return {
         supplier: suppliers,
         pagination: {
-          next_key: nextPageKey,
+          next_key: res.pagination.next_key,
           total: suppliers.length.toString(),
         },
       };
