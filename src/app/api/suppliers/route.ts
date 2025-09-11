@@ -20,7 +20,6 @@ export async function GET(request: Request) {
   const api = new PocketApi(env.apiUrl);
   const suppliers = [];
   let total = 0;
-  console.log(`Fetching suppliers 0 to ${paginationLimit}`);
   const res = await api.poktNetwork.poktroll.supplier.supplier({ ...params });
   if ('supplier' in res) suppliers.push(...res.supplier);
   if ('pagination' in res) {
@@ -28,22 +27,13 @@ export async function GET(request: Request) {
   } else {
     throw new Error(res.message || 'Failed to fetch suppliers');
   }
-  console.log({ total, count: suppliers.length });
   const responses = await Promise.all(Array.from({ length: Math.ceil(total / params.paginationLimit) }, async (_, i) => {
     return api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationOffset: i * params.paginationLimit });
   }));
   for (const resp of responses) {
     if ('supplier' in resp) suppliers.push(...resp.supplier);
     else throw new Error(resp.message || 'Failed to fetch suppliers');
-    console.log({ total, count: suppliers.length });
   }
-  // for (let i = paginationLimit; i < total; i += paginationLimit) {
-  //   console.log(`Fetching suppliers ${i} to ${i + paginationLimit}`);
-  //   res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit, paginationOffset: i });
-  //   if ('supplier' in res) suppliers.push(...res.supplier);
-  //   else throw new Error(res.message || 'Failed to fetch suppliers');
-  //   console.log({ total, count: suppliers.length });
-  // }
   if (suppliers.length === 0) throw new Error('Failed to fetch suppliers');
   return NextResponse.json({
     supplier: suppliers,
