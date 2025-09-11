@@ -24,13 +24,20 @@ export function useSuppliers(params?: {
         throw new Error(res.message || 'Failed to fetch suppliers');
       }
       console.log({ total, count: suppliers.length });
-      for (let i = paginationLimit; i < total; i += paginationLimit) {
-        console.log(`Fetching suppliers ${i} to ${i + paginationLimit}`);
-        res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit, paginationOffset: i });
-        if ('supplier' in res) suppliers.push(...res.supplier);
-        else throw new Error(res.message || 'Failed to fetch suppliers');
-        console.log({ total, count: suppliers.length });
+      const responses = await Promise.all(Array.from({ length: Math.ceil(total / paginationLimit) }, async (_, i) => {
+        return api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit, paginationOffset: i * paginationLimit });
+      }));
+      for (const resp of responses) {
+        if ('supplier' in resp) suppliers.push(...resp.supplier);
+        else throw new Error(resp.message || 'Failed to fetch suppliers');
       }
+      // for (let i = paginationLimit; i < total; i += paginationLimit) {
+      //   console.log(`Fetching suppliers ${i} to ${i + paginationLimit}`);
+      //   res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit, paginationOffset: i });
+      //   if ('supplier' in res) suppliers.push(...res.supplier);
+      //   else throw new Error(res.message || 'Failed to fetch suppliers');
+      //   console.log({ total, count: suppliers.length });
+      // }
       if (suppliers.length === 0) throw new Error('Failed to fetch suppliers');
       return {
         supplier: suppliers,
