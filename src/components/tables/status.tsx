@@ -3,14 +3,18 @@ import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export function StatusTable() {
   const { data: relayTestData } = useRelayTest();
   const { data: supplierData } = useSuppliers({
-    paginationLimit: 1000,
+    paginationLimit: 5000,
     paginationCountTotal: true,
   });
+
+  useEffect(() => {
+    console.log(supplierData?.supplier.length);
+  }, [supplierData]);
 
   const data = useMemo(() => {
     return relayTestData?.map((item) => {
