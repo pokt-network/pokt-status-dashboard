@@ -8,7 +8,7 @@ import { useEffect, useMemo } from "react";
 export function StatusTable() {
   const { data: relayTestData } = useRelayTest();
   const { data: supplierData } = useSuppliers({
-    paginationLimit: 5000,
+    paginationLimit: 1000,
     paginationCountTotal: true,
   });
 
