@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
+import { ChainName, ServiceID } from "@/utils/types";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 
@@ -12,9 +13,35 @@ export function StatusTable() {
     paginationCountTotal: true,
   });
 
+  function matchServiceIdAndChain(serviceId: ServiceID, chain: ChainName) {
+    if (serviceId === chain) return true;
+    if (serviceId === "arb-one" && chain === "arbitrum-one") return true;
+    if (serviceId === "arb-sepolia-testnet" && chain === "arbitrum-sepolia-testnet") return true;
+    if (serviceId === "base-sepolia-testnet" && chain === "base-testnet") return true;
+    if (serviceId === "bera" && chain === "berachain") return true;
+    if (serviceId === "avax-dfk" && chain === "defi-kingdoms") return true;
+    if (serviceId === "evmos" && chain === "evm") return true;
+    if (serviceId === "op" && chain === "optimism") return true;
+    if (serviceId === "op-sepolia-testnet" && chain === "optimism-sepolia-testnet") return true;
+    if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
+    if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
+    if (serviceId === "poly" && chain === "polygon") return true;
+    if (serviceId === "xrplevm-testnet" && chain === "xrpl-evm-testnet") return true;
+    
+    return false;
+  }
+
   const data = useMemo(() => {
     return relayTestData?.map((item) => {
-      const supplier = supplierData?.supplier.reduce((acc, supplier) => acc + supplier.services.reduce((count, service) => count + (service.service_id === item.chain ? 1 : 0), 0), 0);
+      const supplier = supplierData?.supplier.reduce(
+        (acc, supplier) => {
+          return acc + supplier.services.reduce(
+            (count, service) => {
+              return count + (matchServiceIdAndChain(service.service_id, item.chain as ChainName) ? 1 : 0)
+            },
+            0
+          )
+        }, 0);
       return {
         ...item,
         supplier,
