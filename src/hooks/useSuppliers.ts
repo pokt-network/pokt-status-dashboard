@@ -16,7 +16,7 @@ export function useSuppliers(params?: {
       let total = 0;
       const paginationLimit = params?.paginationLimit ?? 1000;
       console.log(`Fetching suppliers 0 to ${paginationLimit}`);
-      let res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit });
+      const res = await api.poktNetwork.poktroll.supplier.supplier({ ...params, paginationLimit });
       if ('supplier' in res) suppliers.push(...res.supplier);
       if ('pagination' in res) {
         total = parseInt(res.pagination.total);
