@@ -19,14 +19,14 @@ export function StatusTable() {
     if (serviceId === "arb-sepolia-testnet" && chain === "arbitrum-sepolia-testnet") return true;
     if (serviceId === "base-sepolia-testnet" && chain === "base-testnet") return true;
     if (serviceId === "bera" && chain === "berachain") return true;
-    if (serviceId === "avax-dfk" && chain === "defi-kingdoms") return true;
-    if (serviceId === "evmos" && chain === "evm") return true;
     if (serviceId === "op" && chain === "optimism") return true;
     if (serviceId === "op-sepolia-testnet" && chain === "optimism-sepolia-testnet") return true;
-    if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
-    if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
+    if (serviceId === "op_sep_test" && chain === "optimism-sepolia-testnet") return true;
     if (serviceId === "poly" && chain === "polygon") return true;
-    if (serviceId === "xrplevm-testnet" && chain === "xrpl-evm-testnet") return true;
+    if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
+    if (serviceId === "poly_amoy_test" && chain === "polygon-amoy-testnet") return true;
+    if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
+    if ((serviceId === "pocket"||serviceId === "pocket-beta") && chain === "pocket") return true;
     
     return false;
   }
