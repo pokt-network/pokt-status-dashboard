@@ -4,7 +4,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
 import { ChainName, ServiceID } from "@/utils/types";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export function StatusTable() {
   const { data: relayTestData } = useRelayTest();
@@ -30,6 +30,19 @@ export function StatusTable() {
     
     return false;
   }
+
+  const serviceIds = useMemo(() => {
+    const serviceIds = supplierData?.supplier.map(
+      (supplier) => supplier.services.map(
+        (service) => service.service_id
+      )
+    ).flat().filter((serviceId) => serviceId !== undefined);
+    return [...new Set(serviceIds)];
+  }, [supplierData]);
+
+  useEffect(() => {
+    console.log(serviceIds);
+  }, [serviceIds]);
 
   const data = useMemo(() => {
     return relayTestData?.map((item) => {
