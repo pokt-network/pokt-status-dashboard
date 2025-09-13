@@ -16,10 +16,10 @@ export async function GET() {
       success: true,
       result: responses,
     });
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json({
       success: false,
-      error: error.message || "Unknown error",
+      error: (error as Error).message || "Unknown error",
     });
   }
 }
