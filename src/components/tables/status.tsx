@@ -7,8 +7,8 @@ import { CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 export function StatusTable() {
-  const { data: relayTestData } = useRelayTest();
-  const { data: supplierData } = useSuppliers({
+  const { data: relayTestData, isLoading: relayTestLoading } = useRelayTest();
+  const { data: supplierData, isLoading: supplierLoading } = useSuppliers({
     paginationLimit: 1000,
     paginationCountTotal: true,
   });
@@ -26,7 +26,7 @@ export function StatusTable() {
     if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
     if (serviceId === "poly_amoy_test" && chain === "polygon-amoy-testnet") return true;
     if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
-    if ((serviceId === "pocket"||serviceId === "pocket-beta") && chain === "pocket") return true;
+    if ((serviceId === "pocket"||serviceId === "pocket-beta"||serviceId === "pocket-alpha") && chain === "pocket") return true;
     
     return false;
   }
@@ -87,7 +87,7 @@ export function StatusTable() {
             </TableRow>
           )) : (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">No data</TableCell>
+              <TableCell colSpan={5} className="text-center">{relayTestLoading || supplierLoading ? "Loading..." : "No data"}</TableCell>
             </TableRow>
           )}
         </TableBody>
