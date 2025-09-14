@@ -4,7 +4,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
 import { ChainName, ServiceID } from "@/utils/types";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export function StatusTable() {
   const { data: relayTestData } = useRelayTest();
@@ -19,17 +19,30 @@ export function StatusTable() {
     if (serviceId === "arb-sepolia-testnet" && chain === "arbitrum-sepolia-testnet") return true;
     if (serviceId === "base-sepolia-testnet" && chain === "base-testnet") return true;
     if (serviceId === "bera" && chain === "berachain") return true;
-    if (serviceId === "avax-dfk" && chain === "defi-kingdoms") return true;
-    if (serviceId === "evmos" && chain === "evm") return true;
     if (serviceId === "op" && chain === "optimism") return true;
     if (serviceId === "op-sepolia-testnet" && chain === "optimism-sepolia-testnet") return true;
-    if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
-    if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
+    if (serviceId === "op_sep_test" && chain === "optimism-sepolia-testnet") return true;
     if (serviceId === "poly" && chain === "polygon") return true;
-    if (serviceId === "xrplevm-testnet" && chain === "xrpl-evm-testnet") return true;
+    if (serviceId === "poly-amoy-testnet" && chain === "polygon-amoy-testnet") return true;
+    if (serviceId === "poly_amoy_test" && chain === "polygon-amoy-testnet") return true;
+    if (serviceId === "poly-zkevm" && chain === "polygon-zkevm") return true;
+    if ((serviceId === "pocket"||serviceId === "pocket-beta") && chain === "pocket") return true;
     
     return false;
   }
+
+  const serviceIds = useMemo(() => {
+    const serviceIds = supplierData?.supplier.map(
+      (supplier) => supplier.services.map(
+        (service) => service.service_id
+      )
+    ).flat().filter((serviceId) => serviceId !== undefined);
+    return [...new Set(serviceIds)];
+  }, [supplierData]);
+
+  useEffect(() => {
+    console.log(serviceIds);
+  }, [serviceIds]);
 
   const data = useMemo(() => {
     return relayTestData?.map((item) => {

@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/utils/env";
 import { createPublicClient, http } from "viem";
-import { RPC_URLS } from "@/utils/rpc";
 
-
-export async function performRelayTest({serviceId}: {serviceId: string}) {
-  const POCKET_URL = `https://${serviceId}.${env.rpcUrlDomain}/${env.rpcKey}`
+export async function performRelayTest({chain}: {chain: string}) {
+  const POCKET_URL = `https://${chain}.${env.rpcUrlDomain}/${env.rpcKey}`
   const client = createPublicClient({
     transport: http(POCKET_URL),
   })
@@ -66,14 +64,20 @@ export function useRelayTest() {
   return useQuery({
     queryKey: ["relay-test"],
     queryFn: async () => {
-      const responses = await Promise.all(RPC_URLS.map(async (chain) => {
-        const result = await performRelayTest({serviceId: chain});
-        return {
-          chain,
-          ...result,
-        };
-      }));
-      return responses;
+      const responses = await fetch("/api/relay-test");
+      if (!responses.ok) {
+        throw new Error("Failed to fetch relay test");
+      }
+      const data = await responses.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch relay test");
+      }
+      return data.result as {
+        chain: string;
+        blockNumber: string;
+        status: "success" | "error";
+        latency: number;
+      }[];
     },
   });
 }
