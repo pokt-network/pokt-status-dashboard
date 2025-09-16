@@ -28,6 +28,7 @@ export function createClient(rpc: string, type: ChainType) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getLatestBlockNumber(client: any, type: ChainType) {
   switch (type) {
     case "evm":

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/utils/env";
-import { Chain, ChainType } from "@/utils/types";
+import { Chain } from "@/utils/types";
 import { createPublicClient, http } from "viem";
 import { createClient, getLatestBlockNumber } from "@/utils/clients";
 
@@ -9,6 +9,7 @@ export async function performRelayTest({name, type}: Chain) {
   
   let blockNumber: bigint | null = null;
   let status: "success" | "error" = "success";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let client: any;
   
   try {

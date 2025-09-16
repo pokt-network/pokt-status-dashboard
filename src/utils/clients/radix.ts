@@ -1,10 +1,12 @@
 // Using @radixdlt/radix-engine-toolkit
 import { RadixEngineToolkit } from '@radixdlt/radix-engine-toolkit';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function createRadixClient(rpc: string) {
   return new RadixEngineToolkit();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getLatestBlockNumber(client: RadixEngineToolkit) {
   // return await client.getLatestBlockNumber();
   return 0;

@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
-import { Chain, ServiceID } from "@/utils/types";
+import { ServiceID } from "@/utils/types";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
