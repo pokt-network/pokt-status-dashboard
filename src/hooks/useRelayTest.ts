@@ -1,18 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/utils/env";
+import { Chain } from "@/utils/types";
 import { createPublicClient, http } from "viem";
+import { createClient, getLatestBlockNumber } from "@/utils/clients";
 
-export async function performRelayTest({chain}: {chain: string}) {
-  const POCKET_URL = `https://${chain}.${env.rpcUrlDomain}/${env.rpcKey}`
-  const client = createPublicClient({
-    transport: http(POCKET_URL),
-  })
-
+export async function performRelayTest({name, type}: Chain) {
+  const POCKET_URL = `https://${name}.${env.rpcUrlDomain}/${env.rpcKey}`
+  
   let blockNumber: bigint | null = null;
   let status: "success" | "error" = "success";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let client: any;
+  
+  try {
+    client = createClient(POCKET_URL, type)
+  } catch (error) {
+    console.error(error);
+    blockNumber = null;
+    status = "error";
+  }
+
+  if (!client) {
+    return {
+      blockNumber: null,
+      status: "error",
+      latency: 0,
+    };
+  }
+
   const startTime = performance.now();
   try {
-    blockNumber = await client.getBlockNumber()
+    const result = await getLatestBlockNumber(client, type)
+    blockNumber = BigInt(result ?? 0)
   } catch (error) {
     console.error(error);
     blockNumber = null;

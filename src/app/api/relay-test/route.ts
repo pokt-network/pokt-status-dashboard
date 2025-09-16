@@ -5,9 +5,10 @@ import { RPC_URLS } from "@/utils/rpc";
 export async function GET() {
   try {
     const responses = await Promise.all(RPC_URLS.map(async (chain) => {
-      const result = await performRelayTest({chain: chain});
+      const result = await performRelayTest(chain);
       return {
-        chain,
+        chain: chain.name,
+        type: chain.type,
         ...result,
         blockNumber: result.blockNumber?.toString(),
       };
