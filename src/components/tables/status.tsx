@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { useRelayTest } from "@/hooks/useRelayTest";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { cn } from "@/lib/utils";
-import { ChainName, ServiceID } from "@/utils/types";
+import { Chain, ServiceID } from "@/utils/types";
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
@@ -13,7 +13,7 @@ export function StatusTable() {
     paginationCountTotal: true,
   });
 
-  function matchServiceIdAndChain(serviceId: ServiceID, chain: ChainName) {
+  function matchServiceIdAndChain(serviceId: ServiceID, chain: string) {
     if (serviceId === chain) return true;
     if (serviceId === "arb-one" && chain === "arbitrum-one") return true;
     if (serviceId === "arb-sepolia-testnet" && chain === "arbitrum-sepolia-testnet") return true;
@@ -50,7 +50,7 @@ export function StatusTable() {
         (acc, supplier) => {
           return acc + supplier.services.reduce(
             (count, service) => {
-              return count + (matchServiceIdAndChain(service.service_id, item.chain as ChainName) ? 1 : 0)
+              return count + (matchServiceIdAndChain(service.service_id, item.chain) ? 1 : 0)
             },
             0
           )
@@ -82,7 +82,7 @@ export function StatusTable() {
               <TableCell className="text-center">
                 <HealthLabel status={item.status} />
               </TableCell>
-              <TableCell className="text-center">{item.latency ?? "--"}ms</TableCell>
+              <TableCell className="text-center">{item.status === "success" && item.latency ? item.latency + "ms" : "--"}</TableCell>
               <TableCell className="text-center">{item.blockNumber ?? "--"}</TableCell>
             </TableRow>
           )) : (

@@ -9,16 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cosmjs/stargate": "^0.36.0",
+    "@mysten/sui.js": "^0.54.1",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radixdlt/radix-engine-toolkit": "^1.0.5",
+    "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "^5.81.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ethers": "^6.15.0",
     "lucide-react": "^0.518.0",
+    "near-api-js": "^6.3.0",
     "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.3.1",
+    "tronweb": "^6.0.4",
     "viem": "^2.32.0"
   },
   "devDependencies": {
