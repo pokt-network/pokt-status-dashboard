@@ -9,7 +9,7 @@ export function createRadixClient(rpc: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getLatestBlockNumber(client: RadixEngineToolkit) {
   // return await client.getLatestBlockNumber();
-  return 0;
+  throw new Error("Not implemented");
 }
 
 // // Initialize connection to Radix network

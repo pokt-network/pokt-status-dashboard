@@ -61,7 +61,7 @@ export const RPC_URLS: {name: string, type: ChainType}[] = [
   {name: "sui", type: "sui"},
   {name: "taiko", type: "evm"},
   {name: "taiko-hekla-testnet", type: "evm"},
-  {name: "tron", type: "tron"},
+  {name: "tron", type: "evm"},
   {name: "xrplevm", type: "evm"},
   {name: "xrplevm-testnet", type: "evm"},
   {name: "zklink-nova", type: "evm"},

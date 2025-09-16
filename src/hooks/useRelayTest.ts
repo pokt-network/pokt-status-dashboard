@@ -30,7 +30,8 @@ export async function performRelayTest({name, type}: Chain) {
 
   const startTime = performance.now();
   try {
-    blockNumber = BigInt(await getLatestBlockNumber(client, type))
+    const result = await getLatestBlockNumber(client, type)
+    blockNumber = BigInt(result ?? 0)
   } catch (error) {
     console.error(error);
     blockNumber = null;
