@@ -92,7 +92,10 @@ export function useRelayTest() {
         throw new Error(data.error || "Failed to fetch relay test");
       }
       return data.result as {
+        label: string;
+        serviceId: string;
         chain: string;
+        type: string;
         blockNumber: string;
         status: "success" | "error";
         latency: number;

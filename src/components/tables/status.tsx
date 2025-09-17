@@ -50,7 +50,7 @@ export function StatusTable() {
         (acc, supplier) => {
           return acc + supplier.services.reduce(
             (count, service) => {
-              return count + (matchServiceIdAndChain(service.service_id, item.chain) ? 1 : 0)
+              return count + ((item.serviceId === service.service_id || matchServiceIdAndChain(service.service_id, item.chain)) ? 1 : 0)
             },
             0
           )
@@ -77,7 +77,7 @@ export function StatusTable() {
         <TableBody>
           {data && data.length > 0 ? data.map((item) => (
             <TableRow key={item.chain}>
-              <TableCell>{item.chain}</TableCell>
+              <TableCell>{item.label}</TableCell>
               <TableCell className="text-center">{item.supplier ?? "--"}</TableCell>
               <TableCell className="text-center">
                 <HealthLabel status={item.status} />
