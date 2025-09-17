@@ -7,5 +7,5 @@ export function createCosmosClient(rpc: string) {
 
 // Get latest block height
 export async function getLatestBlockNumber(client: StargateClient) {
-  return (await client.getBlock()).id;
+  return await client.getHeight();
 }

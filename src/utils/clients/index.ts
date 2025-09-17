@@ -6,8 +6,15 @@ import { createCosmosClient, getLatestBlockNumber as getLatestBlockNumberCosmos 
 import { createNearClient, getLatestBlockNumber as getLatestBlockNumberNear } from "./near";
 import { createSuiClient, getLatestBlockNumber as getLatestBlockNumberSui } from "./sui";
 import { createTronClient, getLatestBlockNumber as getLatestBlockNumberTron } from "./tron";
+import { PublicClient } from "viem";
+import { Near } from "near-api-js";
+import { SuiClient } from "@mysten/sui.js/client";
+import { TronWeb } from "tronweb";
+import { StargateClient } from "@cosmjs/stargate";
+import { Connection } from "@solana/web3.js";
+import { RadixEngineToolkit } from "@radixdlt/radix-engine-toolkit";
 
-export function createClient(rpc: string, type: ChainType) {
+export async function createClient(rpc: string, type: ChainType) {
   switch (type) {
     case "evm":
       return createEvmClient(rpc);
@@ -29,23 +36,24 @@ export function createClient(rpc: string, type: ChainType) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getLatestBlockNumber(client: any, type: ChainType) {
-  switch (type) {
-    case "evm":
-      return await getLatestBlockNumberEvm(client);
-    case "svm":
-      return await getLatestBlockNumberSvm(client);
-    case "radix":
-      return await getLatestBlockNumberRadix(client);
-    case "cosmos":
-      return await getLatestBlockNumberCosmos(client);
-    case "near":
-      return await getLatestBlockNumberNear(client);
-    case "sui":
-      return await getLatestBlockNumberSui(client);
-    case "tron":
-      return await getLatestBlockNumberTron(client);
-    default:
-      throw new Error(`Unsupported chain type: ${type}`);
+export async function getLatestBlockNumber(client: PublicClient | StargateClient | Near | SuiClient | TronWeb | RadixEngineToolkit | Connection) {
+  if (client instanceof StargateClient) {
+    return await getLatestBlockNumberCosmos(client);
   }
+  if (client instanceof Near) {
+    return await getLatestBlockNumberNear(client);
+  }
+  if (client instanceof SuiClient) {
+    return await getLatestBlockNumberSui(client);
+  }
+  if (client instanceof TronWeb) {
+    return await getLatestBlockNumberTron(client);
+  }
+  if (client instanceof RadixEngineToolkit) {
+    return await getLatestBlockNumberRadix(client);
+  }
+  if (client instanceof Connection) {
+    return await getLatestBlockNumberSvm(client);
+  }
+  return await getLatestBlockNumberEvm(client);
 }

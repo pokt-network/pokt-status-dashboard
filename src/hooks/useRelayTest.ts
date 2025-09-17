@@ -13,7 +13,7 @@ export async function performRelayTest({name, type}: Chain) {
   let client: any;
   
   try {
-    client = createClient(POCKET_URL, type)
+    client = await createClient(POCKET_URL, type)
   } catch (error) {
     console.error(error);
     blockNumber = null;
@@ -30,7 +30,7 @@ export async function performRelayTest({name, type}: Chain) {
 
   const startTime = performance.now();
   try {
-    const result = await getLatestBlockNumber(client, type)
+    const result = await getLatestBlockNumber(client)
     blockNumber = BigInt(result ?? 0)
   } catch (error) {
     console.error(error);
