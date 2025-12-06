@@ -1,37 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { env } from "@/utils/env";
-import { Chain } from "@/utils/types";
-import { createPublicClient, http } from "viem";
-import { createClient, getLatestBlockNumber } from "@/utils/clients";
+import { getLatestBlockNumber } from "@/utils/clients";
 
-export async function performRelayTest({name, type}: Chain) {
-  const POCKET_URL = `https://${name}.${env.rpcUrlDomain}/${env.rpcKey}`
-  
+export async function performRelayTest({ id: serviceId }: { id: string }) {
+  const GATEWAY_URL = `https://${env.rpcUrlDomain}/v1`;
+
   let blockNumber: bigint | null = null;
   let status: "success" | "error" = "success";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let client: any;
-  
-  try {
-    client = await createClient(POCKET_URL, type)
-  } catch (error) {
-    console.error(error);
-    blockNumber = null;
-    status = "error";
-  }
-
-  if (!client) {
-    return {
-      blockNumber: null,
-      status: "error",
-      latency: 0,
-    };
-  }
 
   const startTime = performance.now();
   try {
-    const result = await getLatestBlockNumber(client)
-    blockNumber = BigInt(result ?? 0)
+    const result = await getLatestBlockNumber(GATEWAY_URL, serviceId);
+    blockNumber = BigInt(result ?? 0);
   } catch (error) {
     console.error(error);
     blockNumber = null;
@@ -47,20 +27,18 @@ export async function performRelayTest({name, type}: Chain) {
   };
 }
 
-export function useBlockNumber({serviceId}: {serviceId: string}) {
+export function useBlockNumber({ serviceId }: { serviceId: string }) {
   return useQuery({
     queryKey: ["block-number", serviceId],
     queryFn: async () => {
-      const POCKET_URL = `https://${serviceId}.${env.rpcUrlDomain}/${env.rpcKey}`
-      const client = createPublicClient({
-        transport: http(POCKET_URL),
-      })
+      const GATEWAY_URL = `https://${env.rpcUrlDomain}/v1`;
 
       let blockNumber: bigint | null = null;
       let status: "success" | "error" = "success";
       const startTime = performance.now();
       try {
-        blockNumber = await client.getBlockNumber()
+        const result = await getLatestBlockNumber(GATEWAY_URL, serviceId);
+        blockNumber = BigInt(result ?? 0);
       } catch (error) {
         console.error(error);
         blockNumber = null;
@@ -77,7 +55,6 @@ export function useBlockNumber({serviceId}: {serviceId: string}) {
     },
   });
 }
-
 
 export function useRelayTest() {
   return useQuery({
