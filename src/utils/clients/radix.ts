@@ -1,5 +1,5 @@
 // Using @radixdlt/radix-engine-toolkit
-import { RadixEngineToolkit } from '@radixdlt/radix-engine-toolkit';
+import { RadixEngineToolkit } from "@radixdlt/radix-engine-toolkit";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function createRadixClient(rpc: string) {

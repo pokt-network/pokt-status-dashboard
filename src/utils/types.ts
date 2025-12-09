@@ -1,137 +1,70 @@
-import { RPC_URLS } from "./rpc";
+export type ServiceID = string;
 
-export type ServiceID =
-  | "akash"
-  | "arb-one"
-  | "arb-sepolia-testnet"
-  | "arb_one"
-  | "arb_sep_test"
-  | "atomone"
-  | "avax"
-  | "avax-dfk"
-  | "base"
-  | "base-sepolia-testnet"
-  | "base-test"
-  | "bera"
-  | "blast"
-  | "boba"
-  | "bsc"
-  | "celo"
-  | "cheqd"
-  | "chihuahua"
-  | "elys-network"
-  | "eth"
-  | "eth-holesky-testnet"
-  | "eth-sepolia-testnet"
-  | "eth_hol_test"
-  | "eth_sep_test"
-  | "evmos"
-  | "fantom"
-  | "fetch"
-  | "fraxtal"
-  | "fuse"
-  | "giwa-sepolia-testnet"
-  | "gnosis"
-  | "harmony"
-  | "hey"
-  | "ink"
-  | "iotex"
-  | "jackal"
-  | "juno"
-  | "kaia"
-  | "kava"
-  | "linea"
-  | "mantle"
-  | "metis"
-  | "moonbeam"
-  | "moonriver"
-  | "near"
-  | "oasys"
-  | "op"
-  | "op-sepolia-testnet"
-  | "op_sep_test"
-  | "opbnb"
-  | "osmosis"
-  | "persistence"
-  | "pocket"
-  | "pocket-alpha"
-  | "pocket-beta"
-  | "poly"
-  | "poly-amoy-testnet"
-  | "poly-zkevm"
-  | "poly_amoy_test"
+export type ChainType =
+  | "evm"
+  | "svm"
   | "radix"
-  | "router"
-  | "rpc1"
-  | "seda"
-  | "sei"
-  | "shentu"
-  | "solana"
-  | "sonic"
-  | "stargaze"
-  | "scroll"
+  | "cosmos"
+  | "near"
   | "sui"
-  | "taiko"
-  | "taiko-hekla-testnet"
-  | "tron"
-  | "xrplevm"
-  | "xrplevm-grove-only"
-  | "xrplevm-testnet"
-  | "zklink-nova"
-  | "zksync-era"
+  | "tron";
 
-export type ChainType = "evm" | "svm" | "radix" | "cosmos" | "near" | "sui" | "tron"
-export type Chain = (typeof RPC_URLS)[number];
+export type Chain = {
+  label: string;
+  name: string;
+  serviceId: ServiceID;
+  type: ChainType;
+};
 
 export type Supplier = {
-  operator_address: string,
-  owner_address: string,
+  operator_address: string;
+  owner_address: string;
   service_config_history: {
-    activation_height: string,
-    deactivation_height: string,
-    operator_address: string,
+    activation_height: string;
+    deactivation_height: string;
+    operator_address: string;
     service: {
       endpoints: {
         configs: {
-          key: string,
-          value: string
-        }[],
-        rpc_type: string,
-        url: string
-      }[],
+          key: string;
+          value: string;
+        }[];
+        rpc_type: string;
+        url: string;
+      }[];
       rev_share: {
-        address: string,
-        rev_share_percentage: string
-      }[],
-      service_id: ServiceID
-    },
-  }[],
+        address: string;
+        rev_share_percentage: string;
+      }[];
+      service_id: ServiceID;
+    };
+  }[];
   services: {
     endpoints: {
       configs: {
-        key: string,
-        value: string
-      }[],
-      rpc_type: string,
-      url: string
-    }[],
+        key: string;
+        value: string;
+      }[];
+      rpc_type: string;
+      url: string;
+    }[];
     rev_share: {
-      address: string,
-      rev_share_percentage: string
-    }[],
-    service_id: ServiceID
-  }[],
+      address: string;
+      rev_share_percentage: string;
+    }[];
+    service_id: ServiceID;
+  }[];
   stake: {
-    amount: string,
-    denom: string
-  },
-  unstake_session_end_height: string
-}
+    amount: string;
+    denom: string;
+  };
+  unstake_session_end_height: string;
+};
 
 export type SupplierResponse = {
-  supplier: Supplier[],
+  supplier: Supplier[];
   pagination: {
-    next_key: string,
-    total: string
-  }
-}
+    next_key: string;
+    total: string;
+  };
+};
