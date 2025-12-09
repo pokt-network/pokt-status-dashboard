@@ -16,5 +16,6 @@ export function createNearClient(rpc: string, serviceId: ServiceID) {
 }
 
 export async function getLatestBlockNumber(client: Near) {
-  return await client.connection.provider.getCurrentEpochSeatPrice();
+  const status = await client.connection.provider.status();
+  return status.sync_info.latest_block_height;
 }
