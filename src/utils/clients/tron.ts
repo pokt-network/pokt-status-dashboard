@@ -1,8 +1,14 @@
-import {TronWeb} from 'tronweb';
+import { TronWeb } from "tronweb";
+import { ServiceID } from "../types";
+import { env } from "../env";
 
-export function createTronClient(rpc: string) {
+export function createTronClient(rpc: string, serviceId: ServiceID) {
   return new TronWeb({
-    fullHost: rpc
+    fullHost: rpc,
+    headers: {
+      Authorization: env.rpcKey,
+      "Target-Service-Id": serviceId,
+    },
   });
 }
 

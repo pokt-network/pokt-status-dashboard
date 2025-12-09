@@ -1,12 +1,22 @@
 // Using @mysten/sui.js
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiJsonRpcClient, JsonRpcHTTPTransport } from "@mysten/sui/jsonRpc";
+import { ServiceID } from "../types";
+import { env } from "../env";
 
-export function createSuiClient(rpc: string) {
-  return new SuiClient({ 
-    url: rpc 
+export function createSuiClient(rpc: string, serviceId: ServiceID) {
+  return new SuiJsonRpcClient({
+    transport: new JsonRpcHTTPTransport({
+      url: rpc,
+      rpc: {
+        headers: {
+          Authorization: env.rpcKey,
+          "Target-Service-Id": serviceId,
+        },
+      },
+    }),
   });
 }
 
-export async function getLatestBlockNumber(client: SuiClient) {
+export async function getLatestBlockNumber(client: SuiJsonRpcClient) {
   return await client.getLatestCheckpointSequenceNumber();
 }

@@ -1,36 +1,18 @@
 import { NextResponse } from "next/server";
 import { performRelayTest } from "@/hooks/useRelayTest";
-import { PocketApi } from "@/utils/api";
-import { env } from "@/utils/env";
+import servicesJson from "@/data/services.json";
+import { Chain } from "@/utils/types";
 
 export async function GET() {
   try {
-    const api = new PocketApi(env.apiUrl);
-    const res = await api.poktNetwork.poktroll.service.service();
-    if (!("service" in res)) {
-      throw new Error(res.message || "Failed to fetch services");
-    }
-    const { service } = res;
-
-    const GATEWAY_HEALTH_URL = `https://${env.rpcUrlDomain}/healthz`;
-    const gatewayHealth = await fetch(GATEWAY_HEALTH_URL).then((res) =>
-      res.json()
-    );
-    const configuredServiceIDs: string[] =
-      gatewayHealth.configuredServiceIDs || [];
-
-    // Filter services to only include those that are configured in the gateway
-    const allServices = service.filter((service) =>
-      configuredServiceIDs.includes(service.id)
-    );
-
     const responses = await Promise.all(
-      allServices.map(async (service) => {
-        const result = await performRelayTest(service);
+      (servicesJson.services as Chain[]).map(async (chain) => {
+        const result = await performRelayTest(chain);
         return {
-          label: service.name,
-          serviceId: service.id,
-          chain: service.name,
+          label: chain.label,
+          serviceId: chain.serviceId,
+          chain: chain.name,
+          type: chain.type,
           ...result,
           blockNumber: result.blockNumber?.toString(),
         };

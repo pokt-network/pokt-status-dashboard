@@ -1,57 +1,92 @@
-import { ChainType } from "../types";
-import { createEvmClient } from "./evm";
-import { createRadixClient } from "./radix";
-import { createSolanaClient } from "./svm";
-import { createCosmosClient } from "./cosmos";
-import { createNearClient } from "./near";
-import { createSuiClient } from "./sui";
-import { createTronClient } from "./tron";
-import { env } from "../env";
+import { ChainType, ServiceID } from "../types";
+import {
+  createEvmClient,
+  getLatestBlockNumber as getLatestBlockNumberEvm,
+} from "./evm";
+import {
+  createRadixClient,
+  getLatestBlockNumber as getLatestBlockNumberRadix,
+} from "./radix";
+import {
+  createSolanaClient,
+  getLatestBlockNumber as getLatestBlockNumberSvm,
+} from "./svm";
+import {
+  createCosmosClient,
+  getLatestBlockNumber as getLatestBlockNumberCosmos,
+} from "./cosmos";
+import {
+  createNearClient,
+  getLatestBlockNumber as getLatestBlockNumberNear,
+} from "./near";
+import {
+  createSuiClient,
+  getLatestBlockNumber as getLatestBlockNumberSui,
+} from "./sui";
+import {
+  createTronClient,
+  getLatestBlockNumber as getLatestBlockNumberTron,
+} from "./tron";
+import { PublicClient } from "viem";
+import { Near } from "near-api-js";
+import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+import { TronWeb } from "tronweb";
+import { StargateClient } from "@cosmjs/stargate";
+import { Connection } from "@solana/web3.js";
+import { RadixEngineToolkit } from "@radixdlt/radix-engine-toolkit";
 
-export async function createClient(rpc: string, type: ChainType) {
+export async function createClient(
+  rpc: string,
+  type: ChainType,
+  serviceId: ServiceID
+) {
   switch (type) {
     case "evm":
-      return createEvmClient(rpc);
+      return createEvmClient(rpc, serviceId);
     case "svm":
-      return createSolanaClient(rpc);
+      return createSolanaClient(rpc, serviceId);
     case "radix":
       return createRadixClient(rpc);
     case "cosmos":
-      return createCosmosClient(rpc);
+      return createCosmosClient(rpc, serviceId);
     case "near":
-      return createNearClient(rpc);
+      return createNearClient(rpc, serviceId);
     case "sui":
-      return createSuiClient(rpc);
+      return createSuiClient(rpc, serviceId);
     case "tron":
-      return createTronClient(rpc);
+      return createTronClient(rpc, serviceId);
     default:
       throw new Error(`Unsupported chain type: ${type}`);
   }
 }
 
 export async function getLatestBlockNumber(
-  gatewayUrl: string,
-  serviceId: string
+  client:
+    | PublicClient
+    | StargateClient
+    | Near
+    | SuiJsonRpcClient
+    | TronWeb
+    | RadixEngineToolkit
+    | Connection
 ) {
-  const response = await fetch(gatewayUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Target-Service-Id": serviceId,
-      Authorization: env.rpcKey,
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_blockNumber",
-      params: [],
-    }),
-  });
-
-  const data = await response.json();
-  if (data.result) {
-    return BigInt(data.result);
-  } else {
-    throw new Error("Failed to fetch block number");
+  if (client instanceof StargateClient) {
+    return await getLatestBlockNumberCosmos(client);
   }
+  if (client instanceof Near) {
+    return await getLatestBlockNumberNear(client);
+  }
+  if (client instanceof SuiJsonRpcClient) {
+    return await getLatestBlockNumberSui(client);
+  }
+  if (client instanceof TronWeb) {
+    return await getLatestBlockNumberTron(client);
+  }
+  if (client instanceof RadixEngineToolkit) {
+    return await getLatestBlockNumberRadix(client);
+  }
+  if (client instanceof Connection) {
+    return await getLatestBlockNumberSvm(client);
+  }
+  return await getLatestBlockNumberEvm(client);
 }

@@ -1,0 +1,10 @@
+{
+  "services": [
+    {
+      "label": "Ethereum",
+      "name": "eth",
+      "serviceId": "eth",
+      "type": "evm"
+    }
+  ]
+}
