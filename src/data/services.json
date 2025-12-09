@@ -1,9 +1,33 @@
 {
   "services": [
     {
+      "label": "Base",
+      "name": "base",
+      "serviceId": "base",
+      "type": "evm"
+    },
+    {
+      "label": "Berachain",
+      "name": "bera",
+      "serviceId": "bera",
+      "type": "evm"
+    },
+    {
       "label": "Ethereum",
       "name": "eth",
       "serviceId": "eth",
+      "type": "evm"
+    },
+    {
+      "label": "Ethereum Sepolia Testnet",
+      "name": "eth-sepolia-testnet",
+      "serviceId": "eth-sepolia-testnet",
+      "type": "evm"
+    },
+    {
+      "label": "Gnosis",
+      "name": "gnosis",
+      "serviceId": "gnosis",
       "type": "evm"
     }
   ]

@@ -33,9 +33,9 @@ const GATEWAY_DOMAIN = process.env.NEXT_PUBLIC_RPC_BASE_DOMAIN;
 const GATEWAY_RPC_URL = `https://${GATEWAY_DOMAIN}/v1`;
 const GATEWAY_RPC_KEY = process.env.NEXT_PUBLIC_RPC_KEY;
 
-if (!POKT_API_URL || !GATEWAY_DOMAIN || !GATEWAY_RPC_URL || !GATEWAY_RPC_KEY) {
+if (!POKT_API_URL || !GATEWAY_DOMAIN || !GATEWAY_RPC_KEY) {
   console.error(
-    "Missing one of NEXT_PUBLIC_POCKET_API_URL, NEXT_PUBLIC_RPC_BASE_DOMAIN, NEXT_PUBLIC_RPC_URL, NEXT_PUBLIC_RPC_KEY"
+    "Missing one of NEXT_PUBLIC_POCKET_API_URL, NEXT_PUBLIC_RPC_BASE_DOMAIN, NEXT_PUBLIC_RPC_KEY"
   );
   process.exit(1);
 }
@@ -158,7 +158,7 @@ async function tryTron(rpcUrl: string, serviceId: string) {
 async function tryNear(rpcUrl: string, serviceId: string) {
   const config = {
     networkId: "mainnet",
-    keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+    keyStore: new keyStores.InMemoryKeyStore(),
     nodeUrl: rpcUrl,
     walletUrl: "https://wallet.mainnet.near.org",
     helperUrl: "https://helper.mainnet.near.org",

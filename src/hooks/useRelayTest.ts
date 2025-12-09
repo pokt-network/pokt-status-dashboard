@@ -53,7 +53,14 @@ export function useBlockNumber({ serviceId }: { serviceId: string }) {
     queryFn: async () => {
       const GATEWAY_URL = `https://${env.rpcUrlDomain}/v1`;
       const client = createPublicClient({
-        transport: http(GATEWAY_URL),
+        transport: http(GATEWAY_URL, {
+          fetchOptions: {
+            headers: {
+              Authorization: env.rpcKey,
+              "Target-Service-Id": serviceId,
+            },
+          },
+        }),
       });
 
       let blockNumber: bigint | null = null;
