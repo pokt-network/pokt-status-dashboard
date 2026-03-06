@@ -1,17 +1,27 @@
 import { TronWeb } from "tronweb";
 import { ServiceID } from "../types";
-import { env } from "../env";
 
-export function createTronClient(rpc: string, serviceId: ServiceID) {
+export function createTronClient(rpc: string, serviceId: ServiceID, rpcKey: string) {
   return new TronWeb({
     fullHost: rpc,
     headers: {
-      Authorization: env.rpcKey,
+      Authorization: rpcKey,
       "Target-Service-Id": serviceId,
     },
   });
 }
 
 export async function getLatestBlockNumber(client: TronWeb) {
-  return (await client.trx.getCurrentBlock()).blockID;
+  const block = await client.trx.getCurrentBlock();
+  const blockHeight: unknown = block?.block_header?.raw_data?.number;
+
+  if (typeof blockHeight === "number" && Number.isFinite(blockHeight)) {
+    return blockHeight;
+  }
+
+  if (typeof blockHeight === "string" && blockHeight.trim().length > 0) {
+    return blockHeight;
+  }
+
+  throw new Error("Tron block height is unavailable in current block response");
 }

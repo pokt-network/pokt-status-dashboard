@@ -38,23 +38,24 @@ import { RadixEngineToolkit } from "@radixdlt/radix-engine-toolkit";
 export async function createClient(
   rpc: string,
   type: ChainType,
-  serviceId: ServiceID
+  serviceId: ServiceID,
+  rpcKey: string,
 ) {
   switch (type) {
     case "evm":
-      return createEvmClient(rpc, serviceId);
+      return createEvmClient(rpc, serviceId, rpcKey);
     case "svm":
-      return createSolanaClient(rpc, serviceId);
+      return createSolanaClient(rpc, serviceId, rpcKey);
     case "radix":
       return createRadixClient(rpc);
     case "cosmos":
-      return createCosmosClient(rpc, serviceId);
+      return createCosmosClient(rpc, serviceId, rpcKey);
     case "near":
-      return createNearClient(rpc, serviceId);
+      return createNearClient(rpc, serviceId, rpcKey);
     case "sui":
-      return createSuiClient(rpc, serviceId);
+      return createSuiClient(rpc, serviceId, rpcKey);
     case "tron":
-      return createTronClient(rpc, serviceId);
+      return createTronClient(rpc, serviceId, rpcKey);
     default:
       throw new Error(`Unsupported chain type: ${type}`);
   }
@@ -68,7 +69,7 @@ export async function getLatestBlockNumber(
     | SuiJsonRpcClient
     | TronWeb
     | RadixEngineToolkit
-    | Connection
+    | Connection,
 ) {
   if (client instanceof StargateClient) {
     return await getLatestBlockNumberCosmos(client);

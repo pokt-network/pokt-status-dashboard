@@ -1,28 +1,32 @@
 import { NextResponse } from "next/server";
-import { performRelayTest } from "@/hooks/useRelayTest";
-import servicesJson from "@/data/services.json";
-import { Chain } from "@/utils/types";
+import {
+  getRelayApiRowsCached,
+  getRelayApiRowsSnapshot,
+  relayTestCacheHeaders,
+} from "@/utils/relay-test-cache";
 
 export async function GET() {
   try {
-    const responses = await Promise.all(
-      (servicesJson.services as Chain[]).map(async (chain) => {
-        const result = await performRelayTest(chain);
-        return {
-          label: chain.label,
-          serviceId: chain.serviceId,
-          chain: chain.name,
-          type: chain.type,
-          ...result,
-          blockNumber: result.blockNumber?.toString(),
-        };
-      })
+    const responses = await getRelayApiRowsCached();
+    return NextResponse.json(
+      {
+        success: true,
+        result: responses,
+      },
+      { headers: relayTestCacheHeaders() },
     );
-    return NextResponse.json({
-      success: true,
-      result: responses,
-    });
   } catch (error) {
+    const cached = getRelayApiRowsSnapshot();
+    if (cached) {
+      return NextResponse.json(
+        {
+          success: true,
+          result: cached,
+        },
+        { headers: relayTestCacheHeaders() },
+      );
+    }
+
     return NextResponse.json({
       success: false,
       error: (error as Error).message || "Unknown error",

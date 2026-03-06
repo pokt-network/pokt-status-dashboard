@@ -1,12 +1,15 @@
 import { createPublicClient, http, PublicClient } from "viem";
-import { env } from "../env";
 import { ServiceID } from "../types";
 
-export function createEvmClient(rpc: string, serviceId: ServiceID) {
+export function createEvmClient(
+  rpc: string,
+  serviceId: ServiceID,
+  rpcKey: string,
+) {
   return createPublicClient({
     transport: http(rpc, {
       fetchOptions: {
-        headers: { Authorization: env.rpcKey, "Target-Service-Id": serviceId },
+        headers: { Authorization: rpcKey, "Target-Service-Id": serviceId },
       },
     }),
   });
