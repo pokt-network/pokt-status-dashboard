@@ -56,6 +56,9 @@ RPC_ENDPOINTS_JSON=[{"name":"gateway-a","rpcUrl":"https://path.portal.gateway-a.
 # RELAY_TEST_ENDPOINT_CONCURRENCY=3
 # RELAY_TEST_ENDPOINT_TIMEOUT_MS=4000
 # RELAY_TEST_HEALTH_TIMEOUT_MS=2500
+
+# Optional: protects /api/relay-test/prewarm (used by Vercel Cron)
+# CRON_SECRET=replace-with-a-long-random-string
 ```
 
 **Important**:
@@ -63,6 +66,27 @@ RPC_ENDPOINTS_JSON=[{"name":"gateway-a","rpcUrl":"https://path.portal.gateway-a.
 - Replace `https://your-pocket-api-endpoint.com` with your actual Pocket Network API URL (Shannon Mainnet).
 - `RPC_ENDPOINTS_JSON` must be valid JSON.
 - `apiKey` values are server-side only and must **not** use `NEXT_PUBLIC_` env vars.
+
+### Optional: Vercel Cron Prewarm
+
+If you deploy on Vercel Pro, you can prewarm relay cache every 5 minutes via `vercel.json`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/relay-test/prewarm",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+Set `CRON_SECRET` in Vercel project environment variables. The prewarm route requires:
+
+```text
+Authorization: Bearer <CRON_SECRET>
+```
 
 ### 4. Build the Application
 
