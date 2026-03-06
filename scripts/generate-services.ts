@@ -1,12 +1,15 @@
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { loadEnvConfig } from "@next/env";
 import { StargateClient } from "@cosmjs/stargate";
 import { createPublicClient, http } from "viem";
 import { Connection } from "@solana/web3.js";
 import { SuiJsonRpcClient, JsonRpcHTTPTransport } from "@mysten/sui/jsonRpc";
 import { TronWeb } from "tronweb";
 import { connect, keyStores } from "near-api-js";
+
+loadEnvConfig(process.cwd());
 
 type ChainType = "evm" | "svm" | "cosmos" | "sui" | "tron" | "near" | "unknown";
 
@@ -26,21 +29,113 @@ interface GeneratedOutput {
   services: GeneratedService[];
 }
 
+interface RpcEndpoint {
+  name: string;
+  rpcUrl: string;
+  healthUrl: string;
+  apiKey: string;
+}
+
 // ---- Env helpers -------------------------------------------------------
 
 const POKT_API_URL = process.env.NEXT_PUBLIC_POCKET_API_URL;
-const GATEWAY_DOMAIN = process.env.NEXT_PUBLIC_RPC_BASE_DOMAIN;
-const GATEWAY_RPC_URL = `https://${GATEWAY_DOMAIN}/v1`;
-const GATEWAY_RPC_KEY = process.env.NEXT_PUBLIC_RPC_KEY;
+const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/services.json");
 
-if (!POKT_API_URL || !GATEWAY_DOMAIN || !GATEWAY_RPC_KEY) {
-  console.error(
-    "Missing one of NEXT_PUBLIC_POCKET_API_URL, NEXT_PUBLIC_RPC_BASE_DOMAIN, NEXT_PUBLIC_RPC_KEY"
-  );
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function getRpcEndpointsFromEnv(
+  raw = process.env.RPC_ENDPOINTS_JSON,
+): RpcEndpoint[] {
+  if (!raw) {
+    throw new Error("RPC_ENDPOINTS_JSON is not set");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `RPC_ENDPOINTS_JSON is not valid JSON: ${(error as Error).message}`,
+    );
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("RPC_ENDPOINTS_JSON must be a JSON array");
+  }
+
+  const endpoints = parsed.map((item, index) => {
+    const entry = item as Record<string, unknown>;
+    const name = asNonEmptyString(entry.name);
+    const rpcUrl = asNonEmptyString(entry.rpcUrl);
+    const healthUrl = asNonEmptyString(entry.healthUrl);
+    const apiKey = asNonEmptyString(entry.apiKey);
+
+    if (!name || !rpcUrl || !healthUrl || !apiKey) {
+      throw new Error(
+        `RPC_ENDPOINTS_JSON[${index}] must include non-empty name, rpcUrl, healthUrl, and apiKey`,
+      );
+    }
+
+    if (!isHttpUrl(rpcUrl)) {
+      throw new Error(
+        `RPC_ENDPOINTS_JSON[${index}].rpcUrl must be an absolute http(s) URL`,
+      );
+    }
+
+    if (!isHttpUrl(healthUrl)) {
+      throw new Error(
+        `RPC_ENDPOINTS_JSON[${index}].healthUrl must be an absolute http(s) URL`,
+      );
+    }
+
+    return { name, rpcUrl, healthUrl, apiKey };
+  });
+
+  const byName = new Set<string>();
+  const byRpcUrl = new Set<string>();
+
+  for (const endpoint of endpoints) {
+    if (byName.has(endpoint.name)) {
+      throw new Error(`RPC endpoint name '${endpoint.name}' is duplicated`);
+    }
+    byName.add(endpoint.name);
+
+    if (byRpcUrl.has(endpoint.rpcUrl)) {
+      throw new Error(`RPC endpoint rpcUrl '${endpoint.rpcUrl}' is duplicated`);
+    }
+    byRpcUrl.add(endpoint.rpcUrl);
+  }
+
+  return endpoints;
+}
+
+let RPC_ENDPOINTS: RpcEndpoint[];
+try {
+  RPC_ENDPOINTS = getRpcEndpointsFromEnv();
+} catch (error) {
+  console.error((error as Error).message);
   process.exit(1);
 }
 
-const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/services.json");
+if (!POKT_API_URL) {
+  console.error("NEXT_PUBLIC_POCKET_API_URL is not set");
+  process.exit(1);
+}
 
 // ---- Small helpers -----------------------------------------------------
 
@@ -69,23 +164,23 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
       (err) => {
         clearTimeout(id);
         reject(err);
-      }
+      },
     );
   });
 }
 
-// ---- RPC sniffers ------------------------------------------------------
-
-const commonHeaders = (serviceId: string) => ({
-  Authorization: GATEWAY_RPC_KEY!,
+const commonHeaders = (serviceId: string, rpcKey: string) => ({
+  Authorization: rpcKey,
   "Target-Service-Id": serviceId,
 });
 
-async function tryEvm(rpcUrl: string, serviceId: string) {
+// ---- RPC sniffers ------------------------------------------------------
+
+async function tryEvm(endpoint: RpcEndpoint, serviceId: string) {
   const client = createPublicClient({
-    transport: http(rpcUrl, {
+    transport: http(endpoint.rpcUrl, {
       fetchOptions: {
-        headers: commonHeaders(serviceId),
+        headers: commonHeaders(serviceId, endpoint.apiKey),
       },
     }),
   });
@@ -97,10 +192,10 @@ async function tryEvm(rpcUrl: string, serviceId: string) {
   throw new Error("Not EVM (no hex result)");
 }
 
-async function tryCosmos(rpcUrl: string, serviceId: string) {
+async function tryCosmos(endpoint: RpcEndpoint, serviceId: string) {
   const client = await StargateClient.connect({
-    url: rpcUrl,
-    headers: commonHeaders(serviceId),
+    url: endpoint.rpcUrl,
+    headers: commonHeaders(serviceId, endpoint.apiKey),
   });
   const height = await withTimeout(client.getHeight(), 5_000);
 
@@ -110,9 +205,9 @@ async function tryCosmos(rpcUrl: string, serviceId: string) {
   throw new Error("Not Cosmos (no latest_block_height)");
 }
 
-async function trySolana(rpcUrl: string, serviceId: string) {
-  const client = new Connection(rpcUrl, {
-    httpHeaders: commonHeaders(serviceId),
+async function trySolana(endpoint: RpcEndpoint, serviceId: string) {
+  const client = new Connection(endpoint.rpcUrl, {
+    httpHeaders: commonHeaders(serviceId, endpoint.apiKey),
   });
   const height = await withTimeout(client.getSlot(), 5_000);
 
@@ -122,18 +217,18 @@ async function trySolana(rpcUrl: string, serviceId: string) {
   throw new Error("Not Solana (no numeric slot)");
 }
 
-async function trySui(rpcUrl: string, serviceId: string) {
+async function trySui(endpoint: RpcEndpoint, serviceId: string) {
   const client = new SuiJsonRpcClient({
     transport: new JsonRpcHTTPTransport({
-      url: rpcUrl,
+      url: endpoint.rpcUrl,
       rpc: {
-        headers: commonHeaders(serviceId),
+        headers: commonHeaders(serviceId, endpoint.apiKey),
       },
     }),
   });
   const height = await withTimeout(
     client.getLatestCheckpointSequenceNumber(),
-    5_000
+    5_000,
   );
 
   if (typeof height === "string") {
@@ -142,10 +237,10 @@ async function trySui(rpcUrl: string, serviceId: string) {
   throw new Error("Not Sui (no numeric checkpoint)");
 }
 
-async function tryTron(rpcUrl: string, serviceId: string) {
+async function tryTron(endpoint: RpcEndpoint, serviceId: string) {
   const client = new TronWeb({
-    fullHost: rpcUrl,
-    headers: commonHeaders(serviceId),
+    fullHost: endpoint.rpcUrl,
+    headers: commonHeaders(serviceId, endpoint.apiKey),
   });
   const block = await withTimeout(client.trx.getCurrentBlock(), 5_000);
 
@@ -155,14 +250,14 @@ async function tryTron(rpcUrl: string, serviceId: string) {
   throw new Error("Not Tron (no blockID)");
 }
 
-async function tryNear(rpcUrl: string, serviceId: string) {
+async function tryNear(endpoint: RpcEndpoint, serviceId: string) {
   const config = {
     networkId: "mainnet",
     keyStore: new keyStores.InMemoryKeyStore(),
-    nodeUrl: rpcUrl,
+    nodeUrl: endpoint.rpcUrl,
     walletUrl: "https://wallet.mainnet.near.org",
     helperUrl: "https://helper.mainnet.near.org",
-    headers: commonHeaders(serviceId),
+    headers: commonHeaders(serviceId, endpoint.apiKey),
   };
   const client = await connect(config);
   const status = await withTimeout(client.connection.provider.status(), 5_000);
@@ -173,50 +268,47 @@ async function tryNear(rpcUrl: string, serviceId: string) {
   throw new Error("Not Near (no latest_block_height)");
 }
 
-async function sniffServiceType(serviceId: string): Promise<ChainType> {
-  // 1. Try EVM
+async function sniffServiceTypeOnEndpoint(
+  serviceId: string,
+  endpoint: RpcEndpoint,
+): Promise<ChainType> {
   try {
-    await tryEvm(GATEWAY_RPC_URL!, serviceId);
+    await tryEvm(endpoint, serviceId);
     return "evm";
   } catch {
     // ignore
   }
 
-  // 2. Try Cosmos
   try {
-    await tryCosmos(GATEWAY_RPC_URL!, serviceId);
+    await tryCosmos(endpoint, serviceId);
     return "cosmos";
   } catch {
     // ignore
   }
 
-  // 3. Try Solana
   try {
-    await trySolana(GATEWAY_RPC_URL!, serviceId);
+    await trySolana(endpoint, serviceId);
     return "svm";
   } catch {
     // ignore
   }
 
-  // 4. Try Sui
   try {
-    await trySui(GATEWAY_RPC_URL!, serviceId);
+    await trySui(endpoint, serviceId);
     return "sui";
   } catch {
     // ignore
   }
 
-  // 5. Try Tron
   try {
-    await tryTron(GATEWAY_RPC_URL!, serviceId);
+    await tryTron(endpoint, serviceId);
     return "tron";
   } catch {
     // ignore
   }
 
-  // 6. Try Near
   try {
-    await tryNear(GATEWAY_RPC_URL!, serviceId);
+    await tryNear(endpoint, serviceId);
     return "near";
   } catch {
     // ignore
@@ -225,29 +317,111 @@ async function sniffServiceType(serviceId: string): Promise<ChainType> {
   return "unknown";
 }
 
+async function sniffServiceType(
+  serviceId: string,
+  candidateEndpoints: RpcEndpoint[],
+): Promise<ChainType> {
+  for (const endpoint of candidateEndpoints) {
+    const type = await sniffServiceTypeOnEndpoint(serviceId, endpoint);
+    if (type !== "unknown") {
+      return type;
+    }
+  }
+
+  return "unknown";
+}
+
 // ---- Pocket service discovery -----------------------------------------
 
 async function fetchAllServices(): Promise<ServiceFromPocket[]> {
-  const url = new URL("/pokt-network/poktroll/service/service", POKT_API_URL); // adjust if your path differs
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch services: HTTP ${res.status}`);
+  const services: ServiceFromPocket[] = [];
+  const seenKeys = new Set<string>();
+  let nextKey: string | undefined;
+
+  while (true) {
+    const url = new URL("/pokt-network/poktroll/service/service", POKT_API_URL); // adjust if your path differs
+    url.searchParams.set("pagination.limit", "500");
+    if (nextKey) {
+      url.searchParams.set("pagination.key", nextKey);
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch services: HTTP ${res.status}`);
+    }
+
+    const json = (await res.json()) as {
+      message?: string;
+      service?: ServiceFromPocket[];
+      pagination?: {
+        next_key?: string;
+      };
+    };
+
+    if (!Array.isArray(json.service)) {
+      throw new Error(json.message || "Malformed Pocket service response");
+    }
+
+    services.push(...json.service);
+
+    const newNextKey = json.pagination?.next_key;
+    if (!newNextKey) {
+      break;
+    }
+
+    if (seenKeys.has(newNextKey)) {
+      throw new Error("Pagination loop detected while fetching services");
+    }
+
+    seenKeys.add(newNextKey);
+    nextKey = newNextKey;
   }
-  const json = await res.json();
-  if (!("service" in json)) {
-    throw new Error(json.message || "Malformed Pocket service response");
-  }
-  return json.service as ServiceFromPocket[];
+
+  return services;
 }
 
-async function fetchConfiguredServiceIds(): Promise<string[]> {
-  const healthUrl = `https://${GATEWAY_DOMAIN}/healthz`;
-  const res = await fetch(healthUrl);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch gateway health: HTTP ${res.status}`);
+async function fetchConfiguredServiceIds(
+  endpoint: RpcEndpoint,
+): Promise<string[]> {
+  try {
+    const res = await fetch(endpoint.healthUrl);
+    if (!res.ok) {
+      console.warn(
+        `Health failed for '${endpoint.name}' (${endpoint.healthUrl}): HTTP ${res.status}`,
+      );
+      return [];
+    }
+
+    const json = (await res.json()) as { configuredServiceIDs?: string[] };
+    return json.configuredServiceIDs || [];
+  } catch (error) {
+    console.warn(
+      `Health failed for '${endpoint.name}' (${endpoint.healthUrl}):`,
+      (error as Error).message,
+    );
+    return [];
   }
-  const json = await res.json();
-  return (json.configuredServiceIDs || []) as string[];
+}
+
+async function fetchCoverageByServiceId(): Promise<Map<string, RpcEndpoint[]>> {
+  const results = await Promise.all(
+    RPC_ENDPOINTS.map(async (endpoint) => {
+      const serviceIds = await fetchConfiguredServiceIds(endpoint);
+      return { endpoint, serviceIds };
+    }),
+  );
+
+  const coverageByServiceId = new Map<string, RpcEndpoint[]>();
+
+  for (const { endpoint, serviceIds } of results) {
+    for (const serviceId of serviceIds) {
+      const current = coverageByServiceId.get(serviceId) || [];
+      current.push(endpoint);
+      coverageByServiceId.set(serviceId, current);
+    }
+  }
+
+  return coverageByServiceId;
 }
 
 // ---- Main --------------------------------------------------------------
@@ -264,15 +438,15 @@ async function main() {
   console.log("Fetching Pocket services...");
   const allServices = await fetchAllServices();
 
-  console.log("Fetching gateway health...");
-  const configuredIds = await fetchConfiguredServiceIds();
+  console.log("Fetching gateway health across configured RPC endpoints...");
+  const coverageByServiceId = await fetchCoverageByServiceId();
 
   const relevantServices = allServices.filter((s) =>
-    configuredIds.includes(s.id)
+    coverageByServiceId.has(s.id),
   );
 
   console.log(
-    `Found ${relevantServices.length} services configured in gateway.`
+    `Found ${relevantServices.length} services configured across all healthy gateway endpoints.`,
   );
 
   const updatedServices: GeneratedService[] = [...existing.services];
@@ -285,7 +459,8 @@ async function main() {
     console.log(`Sniffing type for service '${svc.id}' (${svc.name})...`);
     let type: ChainType = "unknown";
     try {
-      type = await sniffServiceType(svc.id);
+      const candidateEndpoints = coverageByServiceId.get(svc.id) || [];
+      type = await sniffServiceType(svc.id, candidateEndpoints);
     } catch (err) {
       console.warn(`  Failed to sniff ${svc.id}:`, (err as Error).message);
     }
@@ -307,7 +482,7 @@ async function main() {
   }
 
   updatedServices.sort((a, b) =>
-    a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
   );
 
   const output: GeneratedOutput = { services: updatedServices };

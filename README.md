@@ -21,11 +21,13 @@ cd status-dashboard
 ### 2. Install Dependencies
 
 Using Bun (recommended):
+
 ```bash
 bun install
 ```
 
 Or using npm:
+
 ```bash
 npm install
 ```
@@ -43,9 +45,16 @@ Edit `.env.local` and set the following environment variables:
 ```env
 # Pocket Network API URL
 NEXT_PUBLIC_POCKET_API_URL=https://your-pocket-api-endpoint.com
+
+# RPC endpoints + per-endpoint API keys (server-only)
+RPC_ENDPOINTS_JSON=[{"name":"gateway-a","rpcUrl":"https://path.portal.gateway-a.com/v1","healthUrl":"https://path.portal.gateway-a.com/healthz","apiKey":"your-key-a"},{"name":"gateway-b","rpcUrl":"https://path.portal.gateway-b.com/v1","healthUrl":"https://path.portal.gateway-b.com/healthz","apiKey":"your-key-b"}]
 ```
 
-**Important**: Replace `https://your-pocket-api-url.com` with your actual Pocket Network API URL. It must be a Shannon Mainnet version.
+**Important**:
+
+- Replace `https://your-pocket-api-endpoint.com` with your actual Pocket Network API URL (Shannon Mainnet).
+- `RPC_ENDPOINTS_JSON` must be valid JSON.
+- `apiKey` values are server-side only and must **not** use `NEXT_PUBLIC_` env vars.
 
 ### 4. Build the Application
 
@@ -54,6 +63,7 @@ bun run build
 ```
 
 Or using npm:
+
 ```bash
 npm run build
 ```
@@ -65,6 +75,7 @@ bun run start
 ```
 
 Or using npm:
+
 ```bash
 npm run start
 ```
@@ -85,12 +96,13 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your 
+Open [http://localhost:3000](http://localhost:3000) with your
 browser to see the result.
 
 ## Configuration Options
 
 ### Pagination Settings
+
 You can modify default pagination settings in `src/utils/constants.ts`:
 
 ```typescript
@@ -101,6 +113,7 @@ export const DEFAULT_PAGE_REVERSE = false;
 ```
 
 ### API Configuration
+
 The dashboard connects to Pocket Network APIs through the configured endpoint. Ensure your API endpoint supports the following endpoints:
 
 - `/pokt-network/poktroll/application/application`
@@ -126,6 +139,7 @@ The dashboard connects to Pocket Network APIs through the configured endpoint. E
 ## 📞 Support
 
 For issues and questions:
+
 - Create an issue in the repository
 - Check the troubleshooting section above
 - Review the Pocket Network documentation for API-related questions

@@ -1,16 +1,15 @@
 // Using near-api-js
 import { connect, keyStores, Near } from "near-api-js";
-import { env } from "../env";
 import { ServiceID } from "../types";
 
-export function createNearClient(rpc: string, serviceId: ServiceID) {
+export function createNearClient(rpc: string, serviceId: ServiceID, rpcKey: string) {
   const config = {
     networkId: "mainnet",
-    keyStore: new keyStores.BrowserLocalStorageKeyStore(),
+    keyStore: new keyStores.InMemoryKeyStore(),
     nodeUrl: rpc,
     walletUrl: "https://wallet.mainnet.near.org",
     helperUrl: "https://helper.mainnet.near.org",
-    headers: { Authorization: env.rpcKey, "Target-Service-Id": serviceId },
+    headers: { Authorization: rpcKey, "Target-Service-Id": serviceId },
   };
   return connect(config);
 }

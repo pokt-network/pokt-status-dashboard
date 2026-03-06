@@ -1,15 +1,14 @@
 // Using @mysten/sui.js
 import { SuiJsonRpcClient, JsonRpcHTTPTransport } from "@mysten/sui/jsonRpc";
 import { ServiceID } from "../types";
-import { env } from "../env";
 
-export function createSuiClient(rpc: string, serviceId: ServiceID) {
+export function createSuiClient(rpc: string, serviceId: ServiceID, rpcKey: string) {
   return new SuiJsonRpcClient({
     transport: new JsonRpcHTTPTransport({
       url: rpc,
       rpc: {
         headers: {
-          Authorization: env.rpcKey,
+          Authorization: rpcKey,
           "Target-Service-Id": serviceId,
         },
       },

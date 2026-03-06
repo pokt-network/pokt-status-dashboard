@@ -1,9 +1,33 @@
 {
   "services": [
     {
+      "label": "Arbitrum One",
+      "name": "arb-one",
+      "serviceId": "arb-one",
+      "type": "evm"
+    },
+    {
+      "label": "Arbitrum Sepolia Testnet",
+      "name": "arb-sepolia-testnet",
+      "serviceId": "arb-sepolia-testnet",
+      "type": "evm"
+    },
+    {
+      "label": "Avalanche",
+      "name": "avax",
+      "serviceId": "avax",
+      "type": "evm"
+    },
+    {
       "label": "Base",
       "name": "base",
       "serviceId": "base",
+      "type": "evm"
+    },
+    {
+      "label": "Base Sepolia Testnet",
+      "name": "base-sepolia-testnet",
+      "serviceId": "base-sepolia-testnet",
       "type": "evm"
     },
     {
@@ -11,6 +35,12 @@
       "name": "bera",
       "serviceId": "bera",
       "type": "evm"
+    },
+    {
+      "label": "Cosmos Hub",
+      "name": "cosmoshub",
+      "serviceId": "cosmoshub",
+      "type": "cosmos"
     },
     {
       "label": "Ethereum",
@@ -25,10 +55,70 @@
       "type": "evm"
     },
     {
+      "label": "Fraxtal",
+      "name": "fraxtal",
+      "serviceId": "fraxtal",
+      "type": "evm"
+    },
+    {
+      "label": "Fuse",
+      "name": "fuse",
+      "serviceId": "fuse",
+      "type": "evm"
+    },
+    {
       "label": "Gnosis",
       "name": "gnosis",
       "serviceId": "gnosis",
       "type": "evm"
+    },
+    {
+      "label": "Ink",
+      "name": "ink",
+      "serviceId": "ink",
+      "type": "evm"
+    },
+    {
+      "label": "Kava",
+      "name": "kava",
+      "serviceId": "kava",
+      "type": "evm"
+    },
+    {
+      "label": "Linea",
+      "name": "linea",
+      "serviceId": "linea",
+      "type": "evm"
+    },
+    {
+      "label": "Mantle",
+      "name": "mantle",
+      "serviceId": "mantle",
+      "type": "evm"
+    },
+    {
+      "label": "Metis",
+      "name": "metis",
+      "serviceId": "metis",
+      "type": "evm"
+    },
+    {
+      "label": "Oasys",
+      "name": "oasys",
+      "serviceId": "oasys",
+      "type": "evm"
+    },
+    {
+      "label": "Pocket Network",
+      "name": "pocket",
+      "serviceId": "pocket",
+      "type": "cosmos"
+    },
+    {
+      "label": "Solana",
+      "name": "solana",
+      "serviceId": "solana",
+      "type": "svm"
     }
   ]
 }
