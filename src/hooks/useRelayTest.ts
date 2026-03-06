@@ -22,7 +22,7 @@ export function useRelayTest() {
         serviceId: string;
         chain: string;
         type: string;
-        blockNumber: string;
+        blockNumber: string | null;
         status: "success" | "error";
         latency: number;
       }[];

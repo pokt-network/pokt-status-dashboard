@@ -22,7 +22,7 @@ export type RelayApiRow = {
   serviceId: string;
   chain: string;
   type: string;
-  blockNumber: string | undefined;
+  blockNumber: string | null;
   status: "success" | "error";
   latency: number;
 };
@@ -68,7 +68,8 @@ async function computeRelayApiRows(): Promise<RelayApiRow[]> {
       chain: chain.name,
       type: chain.type,
       ...result,
-      blockNumber: result.blockNumber?.toString(),
+      blockNumber:
+        result.blockNumber === null ? null : result.blockNumber.toString(),
     };
   });
 }

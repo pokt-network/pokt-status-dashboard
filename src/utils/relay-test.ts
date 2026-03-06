@@ -71,6 +71,31 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   });
 }
 
+async function fetchWithAbortTimeout(
+  input: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`timeout after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
@@ -124,8 +149,9 @@ async function fetchEndpointCoverage(
   endpoint: RpcEndpoint,
 ): Promise<EndpointCoverage | null> {
   try {
-    const response = await withTimeout(
-      fetch(endpoint.healthUrl, { cache: "no-store" }),
+    const response = await fetchWithAbortTimeout(
+      endpoint.healthUrl,
+      { cache: "no-store" },
       HEALTH_CHECK_TIMEOUT_MS,
     );
     if (!response.ok) {
@@ -175,10 +201,22 @@ async function runRelayTestWithEndpoint(
   const startTime = performance.now();
   try {
     const result = await getLatestBlockNumber(client);
+    const blockNumber = toBlockNumber(result);
     const endTime = performance.now();
+
+    if (blockNumber === null) {
+      return {
+        result: {
+          blockNumber: null,
+          status: "error",
+          latency: Math.round(endTime - startTime),
+        },
+      };
+    }
+
     return {
       result: {
-        blockNumber: toBlockNumber(result),
+        blockNumber,
         status: "success",
         latency: Math.round(endTime - startTime),
       },

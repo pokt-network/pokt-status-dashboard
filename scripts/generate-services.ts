@@ -8,6 +8,7 @@ import { Connection } from "@solana/web3.js";
 import { SuiJsonRpcClient, JsonRpcHTTPTransport } from "@mysten/sui/jsonRpc";
 import { TronWeb } from "tronweb";
 import { connect, keyStores } from "near-api-js";
+import { parseRpcEndpoints, RpcEndpoint } from "@/utils/rpc-endpoints-shared";
 
 loadEnvConfig(process.cwd());
 
@@ -29,104 +30,14 @@ interface GeneratedOutput {
   services: GeneratedService[];
 }
 
-interface RpcEndpoint {
-  name: string;
-  rpcUrl: string;
-  healthUrl: string;
-  apiKey: string;
-}
-
 // ---- Env helpers -------------------------------------------------------
 
 const POKT_API_URL = process.env.NEXT_PUBLIC_POCKET_API_URL;
 const OUTPUT_PATH = path.resolve(process.cwd(), "src/data/services.json");
 
-function isHttpUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function asNonEmptyString(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function getRpcEndpointsFromEnv(
-  raw = process.env.RPC_ENDPOINTS_JSON,
-): RpcEndpoint[] {
-  if (!raw) {
-    throw new Error("RPC_ENDPOINTS_JSON is not set");
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    throw new Error(
-      `RPC_ENDPOINTS_JSON is not valid JSON: ${(error as Error).message}`,
-    );
-  }
-
-  if (!Array.isArray(parsed)) {
-    throw new Error("RPC_ENDPOINTS_JSON must be a JSON array");
-  }
-
-  const endpoints = parsed.map((item, index) => {
-    const entry = item as Record<string, unknown>;
-    const name = asNonEmptyString(entry.name);
-    const rpcUrl = asNonEmptyString(entry.rpcUrl);
-    const healthUrl = asNonEmptyString(entry.healthUrl);
-    const apiKey = asNonEmptyString(entry.apiKey);
-
-    if (!name || !rpcUrl || !healthUrl || !apiKey) {
-      throw new Error(
-        `RPC_ENDPOINTS_JSON[${index}] must include non-empty name, rpcUrl, healthUrl, and apiKey`,
-      );
-    }
-
-    if (!isHttpUrl(rpcUrl)) {
-      throw new Error(
-        `RPC_ENDPOINTS_JSON[${index}].rpcUrl must be an absolute http(s) URL`,
-      );
-    }
-
-    if (!isHttpUrl(healthUrl)) {
-      throw new Error(
-        `RPC_ENDPOINTS_JSON[${index}].healthUrl must be an absolute http(s) URL`,
-      );
-    }
-
-    return { name, rpcUrl, healthUrl, apiKey };
-  });
-
-  const byName = new Set<string>();
-  const byRpcUrl = new Set<string>();
-
-  for (const endpoint of endpoints) {
-    if (byName.has(endpoint.name)) {
-      throw new Error(`RPC endpoint name '${endpoint.name}' is duplicated`);
-    }
-    byName.add(endpoint.name);
-
-    if (byRpcUrl.has(endpoint.rpcUrl)) {
-      throw new Error(`RPC endpoint rpcUrl '${endpoint.rpcUrl}' is duplicated`);
-    }
-    byRpcUrl.add(endpoint.rpcUrl);
-  }
-
-  return endpoints;
-}
-
 let RPC_ENDPOINTS: RpcEndpoint[];
 try {
-  RPC_ENDPOINTS = getRpcEndpointsFromEnv();
+  RPC_ENDPOINTS = parseRpcEndpoints(process.env.RPC_ENDPOINTS_JSON);
 } catch (error) {
   console.error((error as Error).message);
   process.exit(1);
@@ -167,6 +78,29 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
       },
     );
   });
+}
+
+async function fetchWithTimeout(
+  input: string | URL,
+  init: RequestInit = {},
+  timeoutMs = 5_000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error("Timeout");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 const commonHeaders = (serviceId: string, rpcKey: string) => ({
@@ -337,6 +271,7 @@ async function fetchAllServices(): Promise<ServiceFromPocket[]> {
   const services: ServiceFromPocket[] = [];
   const seenKeys = new Set<string>();
   let nextKey: string | undefined;
+  const servicesFetchTimeoutMs = 8_000;
 
   while (true) {
     const url = new URL("/pokt-network/poktroll/service/service", POKT_API_URL); // adjust if your path differs
@@ -345,7 +280,7 @@ async function fetchAllServices(): Promise<ServiceFromPocket[]> {
       url.searchParams.set("pagination.key", nextKey);
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, undefined, servicesFetchTimeoutMs);
     if (!res.ok) {
       throw new Error(`Failed to fetch services: HTTP ${res.status}`);
     }
@@ -384,7 +319,7 @@ async function fetchConfiguredServiceIds(
   endpoint: RpcEndpoint,
 ): Promise<string[]> {
   try {
-    const res = await fetch(endpoint.healthUrl);
+    const res = await fetchWithTimeout(endpoint.healthUrl, undefined, 5_000);
     if (!res.ok) {
       console.warn(
         `Health failed for '${endpoint.name}' (${endpoint.healthUrl}): HTTP ${res.status}`,
