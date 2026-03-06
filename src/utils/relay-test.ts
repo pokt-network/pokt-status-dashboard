@@ -4,6 +4,23 @@ import { createClient, getLatestBlockNumber } from "@/utils/clients";
 import { getRpcEndpointsFromEnv, RpcEndpoint } from "@/utils/rpc-endpoints";
 import { Chain } from "@/utils/types";
 
+const COVERAGE_TTL_MS = parsePositiveInt(
+  process.env.RELAY_TEST_COVERAGE_TTL_MS,
+  15 * 60 * 1000,
+);
+const HEALTH_CHECK_TIMEOUT_MS = parsePositiveInt(
+  process.env.RELAY_TEST_HEALTH_TIMEOUT_MS,
+  2_500,
+);
+const ENDPOINT_TEST_TIMEOUT_MS = parsePositiveInt(
+  process.env.RELAY_TEST_ENDPOINT_TIMEOUT_MS,
+  4_000,
+);
+const ENDPOINT_TEST_CONCURRENCY = parsePositiveInt(
+  process.env.RELAY_TEST_ENDPOINT_CONCURRENCY,
+  3,
+);
+
 export type RelayTestResult = {
   blockNumber: bigint | null;
   status: "success" | "error";
@@ -18,6 +35,72 @@ type EndpointCoverage = {
 type EndpointRelayResponse = {
   result: RelayTestResult;
 };
+
+type CoverageCacheEntry = {
+  coverage: Map<string, RpcEndpoint[]>;
+  expiresAt: number;
+};
+
+let coverageCache: CoverageCacheEntry | null = null;
+let coverageRefreshPromise: Promise<Map<string, RpcEndpoint[]>> | null = null;
+
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => {
+      reject(new Error(`timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        clearTimeout(id);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(id);
+        reject(error);
+      },
+    );
+  });
+}
+
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  await Promise.all(
+    Array.from({ length: safeConcurrency }, async () => {
+      while (true) {
+        const index = nextIndex;
+        nextIndex += 1;
+
+        if (index >= items.length) {
+          return;
+        }
+
+        results[index] = await worker(items[index], index);
+      }
+    }),
+  );
+
+  return results;
+}
 
 function toBlockNumber(value: unknown): bigint | null {
   try {
@@ -41,7 +124,10 @@ async function fetchEndpointCoverage(
   endpoint: RpcEndpoint,
 ): Promise<EndpointCoverage | null> {
   try {
-    const response = await fetch(endpoint.healthUrl, { cache: "no-store" });
+    const response = await withTimeout(
+      fetch(endpoint.healthUrl, { cache: "no-store" }),
+      HEALTH_CHECK_TIMEOUT_MS,
+    );
     if (!response.ok) {
       console.warn(
         `[relay-test] Health check failed for '${endpoint.name}' with HTTP ${response.status}`,
@@ -62,7 +148,7 @@ async function fetchEndpointCoverage(
   }
 }
 
-async function performRelayTestWithEndpoint(
+async function runRelayTestWithEndpoint(
   chain: Chain,
   endpoint: RpcEndpoint,
 ): Promise<EndpointRelayResponse> {
@@ -110,6 +196,30 @@ async function performRelayTestWithEndpoint(
   }
 }
 
+async function performRelayTestWithEndpoint(
+  chain: Chain,
+  endpoint: RpcEndpoint,
+): Promise<EndpointRelayResponse> {
+  try {
+    return await withTimeout(
+      runRelayTestWithEndpoint(chain, endpoint),
+      ENDPOINT_TEST_TIMEOUT_MS,
+    );
+  } catch (error) {
+    console.error(
+      `[relay-test] Endpoint test timeout/failure for '${endpoint.name}' on '${chain.serviceId}':`,
+      (error as Error).message,
+    );
+    return {
+      result: {
+        blockNumber: null,
+        status: "error",
+        latency: ENDPOINT_TEST_TIMEOUT_MS,
+      },
+    };
+  }
+}
+
 function buildCoverageByServiceId(
   coverageList: EndpointCoverage[],
 ): Map<string, RpcEndpoint[]> {
@@ -126,12 +236,12 @@ function buildCoverageByServiceId(
   return coverageByServiceId;
 }
 
-export async function getCoverageByServiceId(): Promise<
-  Map<string, RpcEndpoint[]>
-> {
+async function computeCoverageByServiceId(): Promise<Map<string, RpcEndpoint[]>> {
   const endpoints = getRpcEndpointsFromEnv();
-  const coverage = await Promise.all(
-    endpoints.map((endpoint) => fetchEndpointCoverage(endpoint)),
+  const coverage = await mapWithConcurrency(
+    endpoints,
+    Math.min(4, endpoints.length),
+    (endpoint) => fetchEndpointCoverage(endpoint),
   );
 
   const validCoverage = coverage.filter(
@@ -139,6 +249,45 @@ export async function getCoverageByServiceId(): Promise<
   );
 
   return buildCoverageByServiceId(validCoverage);
+}
+
+async function refreshCoverageCache(): Promise<Map<string, RpcEndpoint[]>> {
+  if (!coverageRefreshPromise) {
+    coverageRefreshPromise = computeCoverageByServiceId()
+      .then((coverage) => {
+        coverageCache = {
+          coverage,
+          expiresAt: Date.now() + COVERAGE_TTL_MS,
+        };
+        return coverage;
+      })
+      .finally(() => {
+        coverageRefreshPromise = null;
+      });
+  }
+
+  return coverageRefreshPromise;
+}
+
+export async function getCoverageByServiceId(): Promise<
+  Map<string, RpcEndpoint[]>
+> {
+  const now = Date.now();
+  if (coverageCache && now < coverageCache.expiresAt) {
+    return coverageCache.coverage;
+  }
+
+  if (coverageCache) {
+    void refreshCoverageCache().catch((error) => {
+      console.warn(
+        "[relay-test] Coverage cache refresh failed; continuing with stale coverage:",
+        (error as Error).message,
+      );
+    });
+    return coverageCache.coverage;
+  }
+
+  return refreshCoverageCache();
 }
 
 export async function performRelayTestForChain(
@@ -153,10 +302,10 @@ export async function performRelayTestForChain(
     };
   }
 
-  const responses = await Promise.all(
-    candidateEndpoints.map((endpoint) =>
-      performRelayTestWithEndpoint(chain, endpoint),
-    ),
+  const responses = await mapWithConcurrency(
+    candidateEndpoints,
+    ENDPOINT_TEST_CONCURRENCY,
+    (endpoint) => performRelayTestWithEndpoint(chain, endpoint),
   );
 
   const successfulResponses = responses.filter(

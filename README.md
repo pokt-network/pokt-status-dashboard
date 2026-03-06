@@ -48,6 +48,14 @@ NEXT_PUBLIC_POCKET_API_URL=https://your-pocket-api-endpoint.com
 
 # RPC endpoints + per-endpoint API keys (server-only)
 RPC_ENDPOINTS_JSON=[{"name":"gateway-a","rpcUrl":"https://path.portal.gateway-a.com/v1","healthUrl":"https://path.portal.gateway-a.com/healthz","apiKey":"your-key-a"},{"name":"gateway-b","rpcUrl":"https://path.portal.gateway-b.com/v1","healthUrl":"https://path.portal.gateway-b.com/healthz","apiKey":"your-key-b"}]
+
+# Optional relay-test performance tuning
+# RELAY_TEST_RESPONSE_TTL_MS=300000
+# RELAY_TEST_COVERAGE_TTL_MS=900000
+# RELAY_TEST_CHAIN_CONCURRENCY=8
+# RELAY_TEST_ENDPOINT_CONCURRENCY=3
+# RELAY_TEST_ENDPOINT_TIMEOUT_MS=4000
+# RELAY_TEST_HEALTH_TIMEOUT_MS=2500
 ```
 
 **Important**:
